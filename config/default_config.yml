@@ -1,0 +1,11 @@
+appearance:
+  animal: neko
+  scale:
+    x: 1
+    y: 1
+motion:
+  speed: 10
+  fps: 5
+  offset:
+    x: 0
+    y: -10
