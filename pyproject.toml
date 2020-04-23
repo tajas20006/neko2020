@@ -8,7 +8,7 @@ authors = ["Yoshioka Shun <tajas2006@gmail.com>"]
 python = "^3.8"
 pyautogui = "^0.9.50"
 pyyaml = "^5.3.1"
-PySimpleGUI = "^4.18.2"
+"infi.systray" = "^0.1.12"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

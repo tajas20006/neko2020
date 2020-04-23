@@ -67,6 +67,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.4.3"
 
 [[package]]
+category = "main"
+description = "Windows system tray icon"
+name = "infi.systray"
+optional = false
+python-versions = "*"
+version = "0.1.12"
+
+[package.dependencies]
+setuptools = "*"
+
+[[package]]
 category = "dev"
 description = "More routines for operating on iterables, beyond itertools"
 name = "more-itertools"
@@ -1920,14 +1931,6 @@ python = ">=3.8,<3.9"
 version = ">=6.2.1"
 
 [[package]]
-category = "main"
-description = "GUI SDK Launched in 2018. It's 2020 and PySimpleGUI is actively developed and supported. Super-simple to create custom GUI's.  200 Demo programs & Cookbook for rapid start. Extensive documentation. Examples using Machine Learning(GUI, OpenCV Integration,  Chatterbot), Rainmeter Style Floating Desktop Widgets, Matplotlib + Pyplot integration, add GUI to command line scripts, PDF & Image Viewer. Great for beginners as well as advanced GUI programmers"
-name = "pysimplegui"
-optional = false
-python-versions = "*"
-version = "4.18.2"
-
-[[package]]
 category = "dev"
 description = "pytest: simple powerful testing with Python"
 name = "pytest"
@@ -2024,7 +2027,7 @@ python-versions = "*"
 version = "0.1.9"
 
 [metadata]
-content-hash = "06c27f5bf44724d99db671e24dda8a8b28c1bd4e55061e460b170a0a6a1d2f7f"
+content-hash = "268f4bc75a1e2bc87eb4f2b3e25eb0254250c4b24e4e43a2df4a302e40b64b61"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2051,6 +2054,10 @@ click = [
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
     {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
+]
+"infi.systray" = [
+    {file = "infi.systray-0.1.12-py3-none-any.whl", hash = "sha256:4041ab3693f7f00a6b2b2d7b553bf60fce8941708b83e32261ca40926952ed0d"},
+    {file = "infi.systray-0.1.12.tar.gz", hash = "sha256:635bc10fabd3ba60a2382922fdec1e4e47efaea4b8c5ea7e437f6cdedae884d3"},
 ]
 more-itertools = [
     {file = "more-itertools-8.2.0.tar.gz", hash = "sha256:b1ddb932186d8a6ac451e1d95844b382f55e12686d51ca0c68b6f61f2ab7a507"},
@@ -2616,10 +2623,6 @@ pyrect = [
 ]
 pyscreeze = [
     {file = "PyScreeze-0.1.26.tar.gz", hash = "sha256:224963114176208eee13b0b984de1f5fdc11b7393ce48ad2b52390dc8855d346"},
-]
-pysimplegui = [
-    {file = "PySimpleGUI-4.18.2-py3-none-any.whl", hash = "sha256:ea7a6b22a093aced89ee39d4de852b2150605249fe1afe8f1aab814e26de3329"},
-    {file = "PySimpleGUI-4.18.2.tar.gz", hash = "sha256:298319f06baeec6c45047335389751b8b6ffafbd9b756783f38c966c51f2db05"},
 ]
 pytest = [
     {file = "pytest-5.4.1-py3-none-any.whl", hash = "sha256:0e5b30f5cb04e887b91b1ee519fa3d89049595f428c1db76e73bd7f17b09b172"},
