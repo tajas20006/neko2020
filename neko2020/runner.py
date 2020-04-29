@@ -7,7 +7,6 @@ from neko2020.utils import files, images
 
 
 def timer(root, myNeko):
-    print("timer")
 
     myNeko.update()
     root.after(200, lambda: timer(root, myNeko))

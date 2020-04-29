@@ -84,9 +84,13 @@ class Neko:
         self.idle_space = 6
         self.action_count = 0
         self.tick_count = 0
+        self.state_count = 0
         self.state = State.STOP
 
     def move_start(self):
+        print("old_x: ", self.old_x)
+        print("to_x-: ", self.to_x - self.idle_space)
+        print("to_x+: ", self.to_x + self.idle_space)
         return (
             self.old_x < self.to_x - self.idle_space
             or self.old_x > self.to_x + self.idle_space
@@ -126,8 +130,8 @@ class Neko:
             return self.set_new_state(State.D_MOVE)
 
     def run_towards(self, new_x, new_y):
-        self.old_to_x = self.to_x
-        self.old_to_y = self.to_y
+        self.old_x = self.to_x
+        self.old_y = self.to_y
         self.to_x = new_x
         self.to_y = new_y
 
@@ -162,13 +166,10 @@ class Neko:
         if self.tick_count % 2 == 0:
             self.state_count += 1
 
-        print("State:  ", self.state)
-        print(f"dx,dy:  {self.dx}, {self.dy}")
-        print(
-            f"pos:    {self.pet.get_position().x}, {self.pet.get_position().y}"
-        )
-        print(f"bounds: {self.pet.get_bounds_rect().top}, {self.pet.get_bounds_rect().right}, {self.pet.get_bounds_rect().bottom}, {self.pet.get_bounds_rect().left}")
-
+        print("State:       ", self.state)
+        print("state_count: ", self.state_count)
+        print("tick_count:  ", self.tick_count)
+        print("move_start:  ", self.move_start())
         if self.state == State.STOP:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
@@ -277,7 +278,7 @@ class Neko:
                 self.set_new_state(State.AWAKE)
             elif self.state_count >= CLAW_TIME:
                 self.set_new_state(State.SCRATCH)
-            self.pet.set_iage(self.get_state_animation_frame_index())
+            self.pet.set_image(self.get_state_animation_frame_index())
         else:
             print("something bad has happened")
             self.set_new_state(State.STOP)

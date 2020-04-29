@@ -51,8 +51,7 @@ class Pet:
         self.draw()
 
     def draw(self):
-        print(self.last_image, self.position.x, self.position.y)
-        print(self.images[int(self.last_image)])
+        print(self.images[int(self.last_image)], self.position.x, self.position.y)
         self.canvas.create_image(
             self.position.x,
             self.position.y,
