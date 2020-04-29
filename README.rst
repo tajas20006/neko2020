@@ -14,7 +14,7 @@ If you have poetry installed: ``poetry install``
 If you do not have poetry, you can use pip to install the dependencies:
 ``pip install pyautogui infi.systray pyyaml``
 
-To start Neko2020, run ``pythonw neko2020/runner.py``
+To start Neko2020, run ``pythonw -m neko2020.runner``
 
 Configuring Neko
 ----------------
