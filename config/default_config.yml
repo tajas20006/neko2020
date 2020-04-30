@@ -1,11 +1,9 @@
-appearance:
-  animal: neko
-  scale:
-    x: 1
-    y: 1
-motion:
-  speed: 10
-  fps: 5
-  offset:
-    x: 0
-    y: -10
+speed:
+  max: 60
+  min: 2
+offset:
+  x: 0
+  y: -50
+idle_space: 10
+animal: neko
+fps: 300

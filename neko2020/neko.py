@@ -76,12 +76,17 @@ class Neko:
         self.to_y = 0
         self.old_x = 0
         self.old_y = 0
-        self.offset = classes.Point(0, -50)
-        self.min_speed = 2
-        self.max_speed = 48
+        self.offset = classes.Point(
+            configs.get_int("offset.x"), configs.get_int("offset.y")
+        )
+        self.min_speed = configs.get_int("speed.min")
+        self.max_speed = configs.get_int("speed.max")
+        # self.offset = classes.Point(0, -50)
+        # self.min_speed = 2
+        # self.max_speed = 48
 
-        self.speed = 16
-        self.idle_space = 6
+        self.idle_space = configs.get_int("idle_space")
+        # self.idle_space = 6
         self.action_count = 0
         self.tick_count = 0
         self.state_count = 0

@@ -1,6 +1,6 @@
 import pyautogui
 import tkinter as tk
-from neko2020.utils import images, classes
+from neko2020.utils import images, classes, configs
 
 
 class Pet:
@@ -12,7 +12,8 @@ class Pet:
         right, down = pyautogui.size()
         self.bounds = classes.Rect(left, up, right, down)
         self.last_image = None
-        self.images, img_width, img_height = images.load_images()
+        self.pet_type = configs.get_string("animal")
+        self.images, img_width, img_height = images.load_images(self.pet_type)
         self.size = classes.Size(img_width, img_height)
 
     def get_position(self):

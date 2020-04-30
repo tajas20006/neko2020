@@ -3,13 +3,13 @@ import sys
 import tkinter as tk
 from infi.systray import SysTrayIcon
 from neko2020 import neko
-from neko2020.utils import files, images
+from neko2020.utils import files, images, configs
 
 
-def timer(root, myNeko):
+def timer(root, myNeko, fps=200):
 
     myNeko.update()
-    root.after(200, lambda: timer(root, myNeko))
+    root.after(fps, lambda: timer(root, myNeko, fps))
 
 
 def onclicked(root):
@@ -30,6 +30,7 @@ if __name__ == "__main__":
     root.wm_attributes("-transparentcolor", "green")
 
     myNeko = neko.Neko(canvas)
+    fps = configs.get_int("fps")
 
     def hello(systray):
         print("hello")
@@ -43,5 +44,5 @@ if __name__ == "__main__":
         set(),
         on_quit=quit,
     ):
-        timer(root, myNeko)
+        timer(root, myNeko, fps)
         root.mainloop()

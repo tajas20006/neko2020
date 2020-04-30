@@ -24,25 +24,8 @@ def deep_merge(*dicts, update=False):
         return reduce(merge_into, dicts, {})
 
 
-def read_config(config_file=None):
-    default_config_file = os.path.join(
-        files.get_project_root(), "config", "default_config.yml"
-    )
-
-    with open(default_config_file) as f:
-        default_config = yaml.load(f, Loader=yaml.BaseLoader)
-    if config_file is None:
-        return default_config
-
-    with open(config_file) as f:
-        user_config = yaml.load(f, Loader=yaml.BaseLoader)
-    return deep_merge(default_config, user_config)
-
-
 def get_value(config_path):
     this_config = config
-    if this_config is None:
-        this_config = read_config()
     if type(config_path) is not list:
         config_path = config_path.split(".")
     for path in config_path:
@@ -54,5 +37,23 @@ def get_int(config_path):
     return int(get_value(config_path))
 
 
+def get_float(config_path):
+    return float(get_value(config_path))
+
+
 def get_string(config_path):
     return str(get_value(config_path))
+
+
+default_config_file = os.path.join(
+    files.get_project_root(), "config", "default_config.yml"
+)
+
+with open(default_config_file) as f:
+    config = yaml.load(f, Loader=yaml.BaseLoader)
+# if config_file is None:
+#     return default_config
+
+# with open(config_file) as f:
+#     user_config = yaml.load(f, Loader=yaml.BaseLoader)
+# return deep_merge(default_config, user_config)
