@@ -39,8 +39,8 @@ if __name__ == "__main__":
         root.quit()
 
     with SysTrayIcon(
-        os.path.join(files.get_project_root(), "resource", "neko", "Awake.ico"),
-        "Neko",
+        os.path.join(files.get_project_root(), "resource", configs.get_string("animal"), "Awake.ico"),
+        configs.get_string("animal"),
         set(),
         on_quit=quit,
     ):
