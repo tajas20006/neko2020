@@ -139,6 +139,7 @@ class Neko:
         self.old_y = self.to_y
         self.to_x = new_x
         self.to_y = new_y
+        print("to_y:    ", self.to_y)
 
         dx = (
             self.to_x
@@ -146,13 +147,21 @@ class Neko:
             - self.pet.get_size().cx / 2  # stop in middle of cursor
             + self.offset.x  # custom offset
         )
-        dy = (
-            self.to_y
-            - self.pet.get_position().y
-            - self.pet.get_size().cy
-            + 1  # stop just above the cursor
-            + self.offset.y  # custom offset
-        )
+        if self.to_y == self.pet.get_bounds_rect().bottom - 1:
+            # if cursor is at the very bottom, ignore offset
+            dy = (
+                self.to_y
+                - self.pet.get_position().y
+                - self.pet.get_size().cy
+            )
+        else:
+            dy = (
+                self.to_y
+                - self.pet.get_position().y
+                - self.pet.get_size().cy
+                + 1  # stop just above the cursor
+                + self.offset.y  # custom offset
+            )
         double_length = dx * dx + dy * dy
 
         if double_length != 0:
@@ -175,6 +184,15 @@ class Neko:
         print("state_count: ", self.state_count)
         print("tick_count:  ", self.tick_count)
         print("move_start:  ", self.move_start())
+        print("cur_pos_x:   ", self.pet.get_position().x)
+        print("cur_pos_y:   ", self.pet.get_position().y)
+        print("dx:          ", self.dx)
+        print("dy:          ", self.dy)
+        print(
+            "botton-top:  ",
+            self.pet.get_bounds_rect().bottom - self.pet.get_bounds_rect().top,
+        )
+        print("pet.cy:      ", self.pet.get_size().cy)
         if self.state == State.STOP:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
@@ -191,17 +209,12 @@ class Neko:
                     - self.pet.get_size().cx
                 ):
                     self.set_new_state(State.R_CLAW)
-                elif self.dx < 0 and self.pet.get_position().y <= 0:
+                elif self.dy < 0 and self.pet.get_position().y <= 0:
                     self.set_new_state(State.U_CLAW)
-                elif (
-                    self.dx > 0
-                    and self.pet.get_position().y
-                    >= (
-                        self.pet.get_bounds_rect().bottom
-                        - self.pet.get_bounds_rect().top
-                    )
-                    - self.pet.get_size().cy
-                ):
+                elif self.dy >= 0 and self.pet.get_position().y >= (
+                    self.pet.get_bounds_rect().bottom
+                    - self.pet.get_bounds_rect().top
+                ) - self.pet.get_size().cy + configs.get_int("offset.y"):
                     self.set_new_state(State.D_CLAW)
                 else:
                     self.set_new_state(State.WASH)
