@@ -14,15 +14,18 @@ If you have poetry installed: ``poetry install``
 If you do not have poetry, you can use pip to install the dependencies:
 ``pip install pyautogui infi.systray pyyaml``
 
-To start Neko2020, run ``pythonw -m neko2020.runner``
+To start Neko2020, run ``poetry run python -m neko2020``
+(or ``path/to/neko2020/.venv/Scripts/python -m neko2020`` to run from other directories.)
 
 Configuring Neko
 ----------------
 
-Not implemented yet.
+Partially implemented.
+
+For now, can modify ``config/default_config.yml`` directly, and you will see the changes.
 
 You can configure Neko using a yaml file.
-The default configuration is saved in config/default_config.yml.
+The default configuration is saved in ``config/default_config.yml``.
 You can change any one of the option to change speed, size, and so on.
 
 If you want your Neko to be something other than a cat, you can place your icons in resource directory.
@@ -38,9 +41,4 @@ TODOs
 -----
 - Neko will not respect config files yet.
   Everything is hard coded for now.
-- Neko doesn't go to sleep.  Neko will not do the craw action.
-  There must be something wrong with the logic.
 - Does not work for dual displays.  Neko will run only in the main display.
-- Sometimes, Neko freezes.
-
-
