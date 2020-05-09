@@ -3,6 +3,7 @@ name = "neko2020"
 version = "0.1.0"
 description = "Cross-Platform oneko implementation with python"
 authors = ["Yoshioka Shun <tajas2006@gmail.com>"]
+repository = "https://github.com/tajas20006/neko2020"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -13,6 +14,10 @@ pyyaml = "^5.3.1"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 black = "^19.10b0"
+pyinstaller = "^3.6"
+pywin32-ctypes = "^0.2.0"
+pefile = "^2019.4.18"
+pywin32 = "^227"
 
 [tool.black]
 line-length = 79
