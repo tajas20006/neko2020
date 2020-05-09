@@ -32,9 +32,6 @@ if __name__ == "__main__":
     myNeko = neko.Neko(canvas)
     fps = configs.get_int("fps")
 
-    def hello(systray):
-        print("hello")
-
     def quit(systray):
         root.quit()
 

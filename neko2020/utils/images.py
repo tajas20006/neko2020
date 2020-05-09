@@ -32,13 +32,9 @@ def load_images(animal="neko", scale={"x": 1.0, "y": 1.0}):
     base_icon_dir = os.path.join(files.get_project_root(), "resource", animal)
     for name in icon_names:
         icon_path = os.path.join(base_icon_dir, ".".join([name, "ico"]))
-        try:
-            img = Image.open(icon_path)
-            img = resize_image(img, scale)
-            icons.append(ImageTk.PhotoImage(img))
-        except Exception:
-            print(f"Could not load icon: {icon_path}")
-            raise
+        img = Image.open(icon_path)
+        img = resize_image(img, scale)
+        icons.append(ImageTk.PhotoImage(img))
 
     return icons, img.width, img.height
 
