@@ -1,9 +1,8 @@
-import argparse
 import math
 import random
 from enum import Enum, auto
 import pyautogui
-from neko2020.utils import configs, images, classes
+from neko2020.utils import configs, classes
 from neko2020 import pet
 
 # animation control constants
@@ -145,11 +144,7 @@ class Neko:
         )
         if self.to_y == self.pet.get_bounds_rect().bottom - 1:
             # if cursor is at the very bottom, ignore offset
-            dy = (
-                self.to_y
-                - self.pet.get_position().y
-                - self.pet.get_size().cy
-            )
+            dy = self.to_y - self.pet.get_position().y - self.pet.get_size().cy
         else:
             dy = (
                 self.to_y

@@ -19,7 +19,7 @@ def load_images(animal="neko", scale={"x": 1.0, "y": 1.0}):
         "Awake", "up1", "up2", "upright1", "upright2",
         "right1", "right2", "downright1", "downright2",
         "down1", "down2", "downleft1", "downleft2",
-        "left1", "left2", "upleft1", "upleft2", 
+        "left1", "left2", "upleft1", "upleft2",
         "upclaw1", "upclaw2", "rightclaw1", "rightclaw2",
         "leftclaw1", "leftclaw2", "downclaw1", "downclaw2",
         "wash2", "scratch1", "scratch2", "yawn2", "yawn3",
@@ -44,4 +44,3 @@ def load_image(animal="neko", icon_name="Awake.ico"):
         files.get_project_root(), "resource", animal, icon_name
     )
     return Image.open(icon_path)
-

@@ -1,9 +1,8 @@
 import os
-import sys
 import tkinter as tk
 from infi.systray import SysTrayIcon
 from neko2020 import neko
-from neko2020.utils import files, images, configs
+from neko2020.utils import files, configs
 
 
 def timer(root, myNeko, fps=200):
@@ -36,7 +35,12 @@ if __name__ == "__main__":
         root.quit()
 
     with SysTrayIcon(
-        os.path.join(files.get_project_root(), "resource", configs.get_string("animal"), "Awake.ico"),
+        os.path.join(
+            files.get_project_root(),
+            "resource",
+            configs.get_string("animal"),
+            "Awake.ico",
+        ),
         configs.get_string("animal"),
         set(),
         on_quit=quit,
