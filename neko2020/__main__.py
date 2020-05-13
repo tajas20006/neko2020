@@ -6,13 +6,12 @@ from neko2020.utils import files, configs
 
 
 def timer(root, myNeko, fps=200):
-
     myNeko.update()
     root.after(fps, lambda: timer(root, myNeko, fps))
 
 
-def onclicked(root):
-    root.destroy()
+def quit(systray, root):
+    root.quit()
 
 
 if __name__ == "__main__":
@@ -28,11 +27,10 @@ if __name__ == "__main__":
     root.wm_attributes("-disabled", True)
     root.wm_attributes("-transparentcolor", "green")
 
-    myNeko = neko.Neko(canvas)
-    fps = configs.get_int("fps")
+    root.update()
 
-    def quit(systray):
-        root.quit()
+    myNeko = neko.Neko(root, canvas)
+    fps = configs.get_int("fps")
 
     with SysTrayIcon(
         os.path.join(
@@ -43,7 +41,7 @@ if __name__ == "__main__":
         ),
         configs.get_string("animal"),
         set(),
-        on_quit=quit,
+        on_quit=lambda systray: quit(systray, root),
     ):
         timer(root, myNeko, fps)
         root.mainloop()

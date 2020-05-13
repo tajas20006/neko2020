@@ -1,7 +1,6 @@
 import math
 import random
 from enum import Enum, auto
-import pyautogui
 from neko2020.utils import configs, classes
 from neko2020 import pet
 
@@ -45,7 +44,8 @@ class State(Enum):
 
 
 class Neko:
-    def __init__(self, canvas):
+    def __init__(self, root, canvas):
+        self.root = root
         self.pet = pet.Pet(canvas)
 
         self.animation = {
@@ -291,5 +291,6 @@ class Neko:
         return self.state
 
     def update(self):
-        x, y = pyautogui.position()
+        x = self.root.winfo_pointerx()
+        y = self.root.winfo_pointery()
         self.run_towards(x, y)

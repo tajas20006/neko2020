@@ -1,4 +1,3 @@
-import pyautogui
 import tkinter as tk
 from neko2020.utils import images, classes, configs
 
@@ -9,7 +8,8 @@ class Pet:
         self.position = classes.Point(0, 0)
         self.old_position = classes.Point(-1, -1)
         left, up = 0, 0
-        right, down = pyautogui.size()
+        right = canvas.winfo_width()
+        down = canvas.winfo_height()
         self.bounds = classes.Rect(left, up, right, down)
         self.last_image = None
         self.pet_type = configs.get_string("animal")
