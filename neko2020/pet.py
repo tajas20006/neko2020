@@ -1,5 +1,6 @@
+import os
 import tkinter as tk
-from neko2020.utils import images, classes, configs
+from neko2020.utils import images, classes, configs, files
 
 
 class Pet:
@@ -13,6 +14,10 @@ class Pet:
         self.bounds = classes.Rect(left, up, right, down)
         self.last_image = None
         self.pet_type = configs.get_string("animal")
+        if self.pet_type == "random":
+            self.pet_type = files.select_random_directory(
+                os.path.join(files.get_project_root(), "resource")
+            )
         self.images, img_width, img_height = images.load_images(self.pet_type)
         self.size = classes.Size(img_width, img_height)
 

@@ -32,14 +32,14 @@ if __name__ == "__main__":
     myNeko = neko.Neko(root, canvas)
     fps = configs.get_int("fps")
 
+    animal = configs.get_string("animal")
+    if animal == "random":
+        animal = "neko"
     with SysTrayIcon(
         os.path.join(
-            files.get_project_root(),
-            "resource",
-            configs.get_string("animal"),
-            "Awake.ico",
+            files.get_project_root(), "resource", animal, "Awake.ico",
         ),
-        configs.get_string("animal"),
+        animal,
         set(),
         on_quit=lambda systray: quit(systray, root),
     ):
