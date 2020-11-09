@@ -5,12 +5,13 @@ from neko2020.utils import configs, classes
 from neko2020 import pet
 
 # animation control constants
-STOP_TIME = 4
-WASH_TIME = 10
-SCRATCH_TIME = 4
-YAWN_TIME = 3
-AWAKE_TIME = 3
-CLAW_TIME = 10
+STOP_TIME = configs.get_int("duration.stop")
+WASH_TIME = configs.get_int("duration.wash")
+SCRATCH_TIME = configs.get_int("duration.scratch")
+YAWN_TIME = configs.get_int("duration.yawn")
+AWAKE_TIME = configs.get_int("duration.awake")
+CLAW_TIME = configs.get_int("duration.claw")
+AWK_RND = configs.get_int("duration.awake_rand")
 
 # define angle border
 # sin(pi / 8)
@@ -220,7 +221,7 @@ class Neko:
                 self.set_new_state(State.AWAKE)
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state == State.AWAKE:
-            if self.state_count >= AWAKE_TIME + int(random.random() * 20):
+            if self.state_count >= AWAKE_TIME + int(random.random() * AWK_RND):
                 self.calc_direction()
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state in {

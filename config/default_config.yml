@@ -4,6 +4,14 @@ speed:
 offset:
   x: 0
   y: -50
+duration:
+  stop: 4
+  wash: 10
+  scratch: 4
+  yawn: 3
+  awake: 3
+  claw: 10
+  awake_rand: 20
 idle_space: 10
 animal: neko
 fps: 300
