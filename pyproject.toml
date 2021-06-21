@@ -12,7 +12,7 @@ pyyaml = "^5.3.1"
 pillow = "^8.1.1"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.1"
+pytest = "^6.2"
 black = "^21.6b0"
 pyinstaller = "^4.3"
 pywin32-ctypes = "^0.2.0"
