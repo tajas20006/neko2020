@@ -7,7 +7,7 @@ repository = "https://github.com/tajas20006/neko2020"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pyyaml = "^5.3.1"
+pyyaml = "^5.4.1"
 "infi.systray" = "^0.1.12"
 pillow = "^8.1.1"
 
