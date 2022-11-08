@@ -17,7 +17,7 @@ black = "^22.6"
 pyinstaller = "^4.5"
 pywin32-ctypes = "^0.2.0"
 pefile = "^2022.5.30"
-pywin32 = "^304"
+pywin32 = "^305"
 flake8 = "^4.0.1"
 pre-commit = "^2.20.0"
 
