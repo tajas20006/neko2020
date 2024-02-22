@@ -7,9 +7,9 @@ If you are interested in the history of oneko you can read an interesting shortr
 Thanks to this article it was possible to find an additional icon library, which was implemented in this project.
 
 Running Neko
--------------------
+
 Windows
-___________________
+-------------------
 Download the project using ``git clone``. 
 Create a file %USERPROFILE%\.config\neko2020\config.yml and copy the contents of ``default_config.yml`` into it.
 Run neko2020.exe
