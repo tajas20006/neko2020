@@ -6,8 +6,6 @@ Neko2020 a reimagining of oneko for Windows implemented in Python.
 If you are interested in the history of oneko you can read an interesting shortread from https://github.com/eliot-akira/neko.
 Thanks to this article it was possible to find an additional icon library, which was implemented in this project.
 
-Running Neko
-
 Windows
 -------------------
 Download the project using ``git clone``. 
