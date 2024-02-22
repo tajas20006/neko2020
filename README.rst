@@ -6,12 +6,12 @@ Neko2020 a reimagining of oneko for Windows implemented in Python.
 If you are interested in the history of oneko you can read an interesting shortread from https://github.com/eliot-akira/neko.
 Thanks to this article it was possible to find an additional icon library, which was implemented in this project.
 
-Running NekoBBB
+Running Neko
 -------------------
 Windows
 ___________________
-Download the project using `git clone`. 
-Create a file %USERPROFILE%\.config\neko2020\config.yml and copy the contents of `default_config.yml` into it.
+Download the project using ``git clone``. 
+Create a file %USERPROFILE%\.config\neko2020\config.yml and copy the contents of ``default_config.yml`` into it.
 Run neko2020.exe
 
 Linux
@@ -30,19 +30,19 @@ You can extend the pet bibliotheca by adding your own icons to the resource cata
 Source and Building
 ------------------
 
-Supported version of `Python 3.8`
+Supported version of ``Python 3.8``
 neko2020 uses the poetry dependency manager.
 
-Run the dependency installation in the project folder with the poetry install command `poetry install`
+Run the dependency installation in the project folder with the poetry install command ``poetry install``
 
-To start Neko2020 run `poetry run python -m neko2020`
-(or `path/to/neko2020/.venv/Scripts/python -m neko2020` to run from other directories.)
+To start Neko2020 run ``poetry run python -m neko2020``
+(or ``path/to/neko2020/.venv/Scripts/python -m neko2020`` to run from other directories.)
 
 Whether you have made changes to the code or just decided to rebuild the file again run poetry run pyinstaller neko2020.spec and a new neko2020.exe will be created in the dist folder.
-`poetry run pyinstaller neko2020.spec`
+``poetry run pyinstaller neko2020.spec``
 
-For work on Linux, copy cp config\default_config.yml `$XDG_CONFIG_HOME/neko2020/config.yml`.
-If XDG_CONFIG_HOME is not set, it will default to ``$HOME/.config``.
+For work on Linux, copy file ``cp config\default_config.yml $XDG_CONFIG_HOME/neko2020/config.yml``.
+If ``XDG_CONFIG_HOME`` is not set, it will default to ``$HOME/.config``.
 
 For rebuilding the binary i use pyinstaller to build the binary.
 
