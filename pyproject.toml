@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "neko2020"
-version = "0.1.0"
+version = "0.1.1"
 description = "Cross-Platform oneko implementation with python"
 authors = ["Yoshioka Shun <tajas2006@gmail.com>"]
 repository = "https://github.com/tajas20006/neko2020"
@@ -8,7 +8,7 @@ repository = "https://github.com/tajas20006/neko2020"
 [tool.poetry.dependencies]
 python = "^3.8"
 pyyaml = "^6.0"
-"infi.systray" = "^0.1.12"
+infi-systray = "^0.1.12"
 pillow = "^9.2.0"
 
 [tool.poetry.dev-dependencies]
