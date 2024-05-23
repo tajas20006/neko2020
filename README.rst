@@ -9,7 +9,7 @@ Thanks to this article it was possible to find an additional icon library, which
 Windows
 -------------------
 Download the project using ``git clone``. 
-Create a file %USERPROFILE%\.config\neko2020\config.yml and copy the contents of ``default_config.yml`` into it.
+Create a file ``%USERPROFILE%\.config\neko2020\config.yml`` and copy the contents of ``default_config.yml`` into it.
 Run neko2020.exe
 
 Linux
@@ -39,16 +39,19 @@ To start Neko2020 run ``poetry run python -m neko2020``
 Whether you have made changes to the code or just decided to rebuild the file again run poetry run pyinstaller neko2020.spec and a new neko2020.exe will be created in the dist folder.
 ``poetry run pyinstaller neko2020.spec``
 
-For work on Linux, copy file ``cp config\default_config.yml $XDG_CONFIG_HOME/neko2020/config.yml``.
+For work on Linux, copy file ``cp config/default_config.yml $XDG_CONFIG_HOME/neko2020/config.yml``.
 If ``XDG_CONFIG_HOME`` is not set, it will default to ``$HOME/.config``.
 
-For rebuilding the binary i use pyinstaller to build the binary.
+For rebuilding the binary, I use pyinstaller to build the binary.
 
 Stopping Neko
 -------------
 
 There is an icon in the system tray.
 Just right click and click "Quit".
+
+Even If you started neko from cmd/bash, DO NOT use ctrl+c to stop neko.
+Console may go unresponsive.
 
 TODOs
 -----
