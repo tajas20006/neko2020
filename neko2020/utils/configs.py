@@ -52,9 +52,12 @@ xdg_config_home = os.getenv(
 )
 user_config_file = os.path.join(xdg_config_home, "neko2020", "config.yml")
 
-with open(default_config_file) as f:
-    config = yaml.load(f, Loader=yaml.BaseLoader)
-if os.path.exists(user_config_file):
-    with open(user_config_file) as f:
-        user_config = yaml.load(f, Loader=yaml.BaseLoader)
-    config = deep_merge(config, user_config)
+
+def load_config():
+    global config
+    with open(default_config_file) as f:
+        config = yaml.load(f, Loader=yaml.BaseLoader)
+    if os.path.exists(user_config_file):
+        with open(user_config_file) as f:
+            user_config = yaml.load(f, Loader=yaml.BaseLoader)
+        config = deep_merge(config, user_config)
