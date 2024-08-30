@@ -11,11 +11,14 @@ from neko2020.utils import files, configs
 GWL_EXSTYLE = -20
 WS_EX_TOOLWINDOW = 0x80
 
-STOP_UPDATE = False
+STOP_UPDATE = True
 
 
 def stop(root):
     global STOP_UPDATE
+    if STOP_UPDATE:
+        # already stopped
+        return
     STOP_UPDATE = True
 
     fps = configs.get_int("fps")
@@ -31,6 +34,9 @@ def stop(root):
 
 def start(root, canvas):
     global STOP_UPDATE
+    if not STOP_UPDATE:
+        # already running
+        return
     STOP_UPDATE = False
 
     # reload config
