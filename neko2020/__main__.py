@@ -1,4 +1,5 @@
 import os
+import time
 
 import ctypes
 import tkinter as tk
@@ -10,13 +11,57 @@ from neko2020.utils import files, configs
 GWL_EXSTYLE = -20
 WS_EX_TOOLWINDOW = 0x80
 
-
-def timer(root, myNeko, fps=200):
-    myNeko.update()
-    root.after(fps, lambda: timer(root, myNeko, fps))
+STOP_UPDATE = True
 
 
-def quit(systray, root):
+def stop(root):
+    global STOP_UPDATE
+    if STOP_UPDATE:
+        # already stopped
+        return
+    STOP_UPDATE = True
+
+    fps = configs.get_int("fps")
+
+    # this is to keep the application running when neko is hidden
+    def nop():
+        if not STOP_UPDATE:
+            return
+        root.after(fps, nop)
+
+    nop()
+
+
+def start(root, canvas):
+    global STOP_UPDATE
+    if not STOP_UPDATE:
+        # already running
+        return
+    STOP_UPDATE = False
+
+    # reload config
+    configs.load_config()
+    myNeko = neko.Neko(root, canvas)
+    fps = configs.get_int("fps")
+
+    def timer(root, myNeko, fps=200):
+        if STOP_UPDATE:
+            return
+        myNeko.update()
+        root.after(fps, lambda: timer(root, myNeko, fps))
+
+    timer(root, myNeko, fps)
+
+
+def restart(root, canvas):
+    fps = configs.get_int("fps")
+    stop(root)
+    # sleep before restarting to let the old instance have time to exit.
+    time.sleep(2 * fps / 1000)
+    start(root, canvas)
+
+
+def quit(root):
     root.quit()
 
 
@@ -44,19 +89,20 @@ if __name__ == "__main__":
 
     root.update()
 
-    myNeko = neko.Neko(root, canvas)
-    fps = configs.get_int("fps")
-
-    animal = configs.get_string("animal")
-    if animal == "random":
-        animal = "neko"
     with SysTrayIcon(
-        os.path.join(
-            files.get_project_root(), "resource", animal, "Awake.ico",
+        icon=os.path.join(
+            files.get_project_root(),
+            "resource",
+            "neko",
+            "Awake.ico",
         ),
-        animal,
-        set(),
-        on_quit=lambda systray: quit(systray, root),
+        hover_text="neko",
+        menu_options=(
+            ("Stop", None, lambda _: stop(root)),
+            ("Start", None, lambda _: start(root, canvas)),
+            ("Restart", None, lambda _: restart(root, canvas)),
+        ),
+        on_quit=lambda _: quit(root),
     ):
-        timer(root, myNeko, fps)
+        start(root, canvas)
         root.mainloop()

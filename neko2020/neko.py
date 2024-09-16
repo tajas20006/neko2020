@@ -4,15 +4,6 @@ from enum import Enum, auto
 from neko2020.utils import configs, classes
 from neko2020 import pet
 
-# animation control constants
-STOP_TIME = configs.get_int("duration.stop")
-WASH_TIME = configs.get_int("duration.wash")
-SCRATCH_TIME = configs.get_int("duration.scratch")
-YAWN_TIME = configs.get_int("duration.yawn")
-AWAKE_TIME = configs.get_int("duration.awake")
-CLAW_TIME = configs.get_int("duration.claw")
-AWK_RND = configs.get_int("duration.awake_rand")
-
 # define angle border
 # sin(pi / 8)
 SinPiPer8 = 0.3826834323651
@@ -48,6 +39,15 @@ class Neko:
     def __init__(self, root, canvas):
         self.root = root
         self.pet = pet.Pet(canvas)
+
+        # animation control constants
+        self.STOP_TIME = configs.get_int("duration.stop")
+        self.WASH_TIME = configs.get_int("duration.wash")
+        self.SCRATCH_TIME = configs.get_int("duration.scratch")
+        self.YAWN_TIME = configs.get_int("duration.yawn")
+        self.AWAKE_TIME = configs.get_int("duration.awake")
+        self.CLAW_TIME = configs.get_int("duration.claw")
+        self.AWK_RND = configs.get_int("duration.awake_rand")
 
         self.animation = {
             State.STOP: [28, 28, 28, 28],
@@ -175,7 +175,7 @@ class Neko:
         if self.state == State.STOP:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
-            elif self.state_count >= STOP_TIME:
+            elif self.state_count >= self.STOP_TIME:
                 if self.dx < 0 and self.pet.get_position().x <= 0:
                     self.set_new_state(State.L_CLAW)
                 elif (
@@ -201,19 +201,19 @@ class Neko:
         elif self.state == State.WASH:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
-            elif self.state_count >= WASH_TIME:
+            elif self.state_count >= self.WASH_TIME:
                 self.set_new_state(State.SCRATCH)
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state == State.SCRATCH:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
-            elif self.state_count >= SCRATCH_TIME:
+            elif self.state_count >= self.SCRATCH_TIME:
                 self.set_new_state(State.YAWN)
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state == State.YAWN:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
-            elif self.state_count >= YAWN_TIME:
+            elif self.state_count >= self.YAWN_TIME:
                 self.set_new_state(State.SLEEP)
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state == State.SLEEP:
@@ -221,7 +221,9 @@ class Neko:
                 self.set_new_state(State.AWAKE)
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state == State.AWAKE:
-            if self.state_count >= AWAKE_TIME + int(random.random() * AWK_RND):
+            if self.state_count >= self.AWAKE_TIME + int(
+                random.random() * self.AWK_RND
+            ):
                 self.calc_direction()
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state in {
@@ -273,7 +275,7 @@ class Neko:
         }:
             if self.move_start():
                 self.set_new_state(State.AWAKE)
-            elif self.state_count >= CLAW_TIME:
+            elif self.state_count >= self.CLAW_TIME:
                 self.set_new_state(State.SCRATCH)
             self.pet.set_image(self.get_state_animation_frame_index())
         else:

@@ -53,6 +53,17 @@ Just right click and click "Quit".
 Even If you started neko from cmd/bash, DO NOT use ctrl+c to stop neko.
 Console may go unresponsive.
 
+Other Commands
+-------------
+
+- Start / Stop
+
+  Use these to show / hide neko.
+
+- Restart
+
+  Use this after editing config.yml to apply the changes.
+
 TODOs
 -----
 - Does not work for dual displays.  Neko will run only in the main display.
