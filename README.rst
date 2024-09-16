@@ -8,7 +8,7 @@ Thanks to this article it was possible to find an additional icon library, which
 
 Windows
 -------------------
-Download the project using ``git clone``. 
+Download the project using ``git clone``.
 Create a file ``%USERPROFILE%\.config\neko2020\config.yml`` and copy the contents of ``default_config.yml`` into it.
 Run neko2020.exe
 
@@ -28,7 +28,7 @@ You can extend the pet bibliotheca by adding your own icons to the resource cata
 Source and Building
 ------------------
 
-Supported version of ``Python 3.8``
+Supported version of ``Python 3.12``
 neko2020 uses the poetry dependency manager.
 
 Run the dependency installation in the project folder with the poetry install command ``poetry install``
