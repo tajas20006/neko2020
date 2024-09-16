@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "neko2020"
-version = "0.1.1"
+version = "0.1.2"
 description = "Cross-Platform oneko implementation with python"
 authors = ["Yoshioka Shun <tajas2006@gmail.com>"]
 repository = "https://github.com/tajas20006/neko2020"
@@ -41,4 +41,3 @@ exclude = '''
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
