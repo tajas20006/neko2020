@@ -13,7 +13,7 @@ pillow = "^10.3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3"
-black = "^22.6"
+black = "^24.3"
 pyinstaller = "^4.5"
 pywin32-ctypes = "^0.2.0"
 pefile = "^2022.5.30"
