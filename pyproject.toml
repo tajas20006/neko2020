@@ -19,7 +19,7 @@ pywin32-ctypes = "^0.2.3"
 pefile = "^2024.8.26"
 pywin32 = "^306"
 flake8 = "^7.1.1"
-pre-commit = "^3.8.0"
+pre-commit = "^4.0.0"
 
 [tool.black]
 line-length = 79
