@@ -9,7 +9,7 @@ repository = "https://github.com/tajas20006/neko2020"
 python = ">=3.12,<3.14"
 pyyaml = "^6.0.2"
 infi-systray = "^0.1.12"
-pillow = "^10.4.0"
+pillow = "^11.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
