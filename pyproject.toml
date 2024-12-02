@@ -12,7 +12,7 @@ infi-systray = "^0.1.12"
 pillow = "^10.4.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.3"
+pytest = "^8.3.4"
 black = "^24.8.0"
 pyinstaller = "^6.10.0"
 pywin32-ctypes = "^0.2.3"
