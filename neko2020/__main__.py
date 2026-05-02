@@ -21,13 +21,13 @@ def stop(root):
         return
     STOP_UPDATE = True
 
-    fps = configs.get_int("fps")
+    delay_ms = 1000 // configs.get_int("fps")
 
     # this is to keep the application running when neko is hidden
     def nop():
         if not STOP_UPDATE:
             return
-        root.after(fps, nop)
+        root.after(delay_ms, nop)
 
     nop()
 
@@ -42,22 +42,22 @@ def start(root, canvas):
     # reload config
     configs.load_config()
     myNeko = neko.Neko(root, canvas)
-    fps = configs.get_int("fps")
+    delay_ms = 1000 // configs.get_int("fps")
 
-    def timer(root, myNeko, fps=200):
+    def timer(root, myNeko, delay_ms=125):
         if STOP_UPDATE:
             return
         myNeko.update()
-        root.after(fps, lambda: timer(root, myNeko, fps))
+        root.after(delay_ms, lambda: timer(root, myNeko, delay_ms))
 
-    timer(root, myNeko, fps)
+    timer(root, myNeko, delay_ms)
 
 
 def restart(root, canvas):
-    fps = configs.get_int("fps")
+    delay_ms = 1000 // configs.get_int("fps")
     stop(root)
     # sleep before restarting to let the old instance have time to exit.
-    time.sleep(2 * fps / 1000)
+    time.sleep(2 * delay_ms / 1000)
     start(root, canvas)
 
 

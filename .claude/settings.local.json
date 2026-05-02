@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv sync *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git push *)",
+      "Bash(gh pr create --title 'Claude worktree branch' --base develop --head claude/wonderful-sanderson-e2036c --body ' *)",
+      "PowerShell(gh pr create --title \"Claude worktree branch\" --base develop --head claude/wonderful-sanderson-e2036c --body \"## Summary`n- PR from worktree branch ``claude/wonderful-sanderson-e2036c`` to ``develop```n`n## Notes`nThis branch currently has no committed changes ahead of develop. Uncommitted local modifications include changes to .pre-commit-config.yaml, pyproject.toml, and new files \\(uv.lock, AGENTS.md, CLAUDE.md, .agents/, .claude/\\).`n`n Generated with [Claude Code]\\(https://claude.com/claude-code\\)\")",
+      "PowerShell($token = \\(git config --get github.token 2>$null\\); if \\(-not $token\\) { $token = $env:GITHUB_TOKEN }; Write-Output \"Token exists: $\\(-not [string]::IsNullOrEmpty\\($token\\)\\)\")"
+    ]
+  }
+}
