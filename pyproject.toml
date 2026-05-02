@@ -1,43 +1,35 @@
-[tool.poetry]
+[project]
 name = "neko2020"
 version = "0.1.2"
 description = "Cross-Platform oneko implementation with python"
-authors = ["Yoshioka Shun <tajas2006@gmail.com>"]
-repository = "https://github.com/tajas20006/neko2020"
+authors = [{ name = "Yoshioka Shun", email = "tajas2006@gmail.com" }]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pyyaml>=6.0.2",
+    "infi-systray>=0.1.12",
+    "pillow>=10.4.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.14"
-pyyaml = "^6.0.2"
-infi-systray = "^0.1.12"
-pillow = "^10.4.0"
+[project.urls]
+Repository = "https://github.com/tajas20006/neko2020"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.3"
-black = "^24.8.0"
-pyinstaller = "^6.10.0"
-pywin32-ctypes = "^0.2.3"
-pefile = "^2024.8.26"
-pywin32 = "^306"
-flake8 = "^7.1.1"
-pre-commit = "^3.8.0"
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3",
+    "ruff>=0.9.0",
+    "pyinstaller>=6.10.0",
+    "pywin32-ctypes>=0.2.3",
+    "pefile>=2024.8.26",
+    "pywin32>=306",
+    "pre-commit>=3.8.0",
+]
 
-[tool.black]
+[tool.ruff]
 line-length = 79
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
