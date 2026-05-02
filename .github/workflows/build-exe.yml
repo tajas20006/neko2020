@@ -1,0 +1,48 @@
+name: Build EXE
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build executable
+        run: uv run pyinstaller neko2020.spec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neko2020-exe
+          path: dist/neko2020.exe
+          retention-days: 90
+
+      - name: Get version
+        id: version
+        run: |
+          $ver = (uv run python -c "import importlib.metadata; print(importlib.metadata.version('neko2020'))")
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: v${{ steps.version.outputs.VERSION }}
+          files: dist/neko2020.exe
+          make_latest: true
