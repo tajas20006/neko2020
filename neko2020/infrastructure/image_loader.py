@@ -2,7 +2,7 @@ import os
 
 from PIL import Image, ImageTk
 
-from neko2020.utils import files
+from neko2020.infrastructure import files
 
 
 def resize_image(img, scale):
