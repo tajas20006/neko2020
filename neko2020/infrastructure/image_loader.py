@@ -13,7 +13,19 @@ def resize_image(img, scale):
     )
 
 
-def load_images(animal="neko", scale={"x": 1.0, "y": 1.0}):
+def _resolve_animal_dir(animal, user_resource_base):
+    if user_resource_base:
+        user_dir = os.path.join(user_resource_base, animal)
+        if os.path.isdir(user_dir):
+            return user_dir
+    return os.path.join(files.get_project_root(), "resource", animal)
+
+
+def load_images(
+    animal="neko",
+    scale={"x": 1.0, "y": 1.0},
+    user_resource_base=None,
+):
     # fmt: off
     icon_names = [
         "Awake", "up1", "up2", "upright1", "upright2",
@@ -29,7 +41,7 @@ def load_images(animal="neko", scale={"x": 1.0, "y": 1.0}):
 
     icons = []
 
-    base_icon_dir = os.path.join(files.get_project_root(), "resource", animal)
+    base_icon_dir = _resolve_animal_dir(animal, user_resource_base)
     for name in icon_names:
         icon_path = os.path.join(base_icon_dir, ".".join([name, "ico"]))
         img = Image.open(icon_path)
