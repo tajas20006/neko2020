@@ -13,6 +13,7 @@ from neko2020.application.ports import IConfigProvider
 from neko2020.domain.state_machine import NekoStateMachine
 from neko2020.domain.value_objects import Point
 from neko2020.infrastructure import files
+from neko2020.ui.config_dialog import ConfigDialog
 
 GWL_EXSTYLE = -20
 WS_EX_TOOLWINDOW = 0x80
@@ -63,11 +64,12 @@ if __name__ == "__main__":
         "XDG_CONFIG_HOME",
         os.path.join(os.path.expanduser("~"), ".config"),
     )
+    user_config_path = os.path.join(xdg_config_home, "neko2020", "config.yml")
     config = YamlConfigProvider(
         default_path=os.path.join(
             project_root, "config", "default_config.yml"
         ),
-        user_path=os.path.join(xdg_config_home, "neko2020", "config.yml"),
+        user_path=user_config_path,
     )
 
     cursor_provider = TkinterCursorProvider(root)
@@ -87,12 +89,25 @@ if __name__ == "__main__":
         scheduler=scheduler,
     )
 
+    config_dialog = ConfigDialog(
+        parent=root,
+        config=config,
+        user_path=user_config_path,
+        service=service,
+    )
+
+    def _open_config():
+        root.after(0, config_dialog.open)
+
     icon_path = os.path.join(project_root, "resource", "neko", "Awake.ico")
     tray_icon = pystray.Icon(
         "neko",
         Image.open(icon_path),
         "neko",
         menu=pystray.Menu(
+            pystray.MenuItem(
+                "Config", lambda i, item: _open_config(), default=True
+            ),
             pystray.MenuItem("Stop", lambda i, item: service.stop()),
             pystray.MenuItem("Start", lambda i, item: service.start()),
             pystray.MenuItem("Restart", lambda i, item: service.restart()),
