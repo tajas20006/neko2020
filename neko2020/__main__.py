@@ -1,69 +1,21 @@
-import os
-import time
-
 import ctypes
+import os
 import tkinter as tk
+
 import pystray
 from PIL import Image
 
-from neko2020 import neko
-from neko2020.utils import files, configs
+from neko2020.adapters.tkinter_cursor import TkinterCursorProvider
+from neko2020.adapters.tkinter_renderer import TkinterRenderer
+from neko2020.adapters.yaml_config import YamlConfigProvider
+from neko2020.application.animation_service import AnimationService
+from neko2020.application.ports import IConfigProvider
+from neko2020.domain.state_machine import NekoStateMachine
+from neko2020.domain.value_objects import Point
+from neko2020.infrastructure import files
 
 GWL_EXSTYLE = -20
 WS_EX_TOOLWINDOW = 0x80
-
-STOP_UPDATE = True
-
-
-def stop(root):
-    global STOP_UPDATE
-    if STOP_UPDATE:
-        # already stopped
-        return
-    STOP_UPDATE = True
-
-    delay_ms = 1000 // configs.get_int("fps")
-
-    # this is to keep the application running when neko is hidden
-    def nop():
-        if not STOP_UPDATE:
-            return
-        root.after(delay_ms, nop)
-
-    nop()
-
-
-def start(root, canvas):
-    global STOP_UPDATE
-    if not STOP_UPDATE:
-        # already running
-        return
-    STOP_UPDATE = False
-
-    # reload config
-    configs.load_config()
-    myNeko = neko.Neko(root, canvas)
-    delay_ms = 1000 // configs.get_int("fps")
-
-    def timer(root, myNeko, delay_ms=125):
-        if STOP_UPDATE:
-            return
-        myNeko.update()
-        root.after(delay_ms, lambda: timer(root, myNeko, delay_ms))
-
-    timer(root, myNeko, delay_ms)
-
-
-def restart(root, canvas):
-    delay_ms = 1000 // configs.get_int("fps")
-    stop(root)
-    # sleep before restarting to let the old instance have time to exit.
-    time.sleep(2 * delay_ms / 1000)
-    start(root, canvas)
-
-
-def quit(root):
-    root.quit()
 
 
 def _hide_from_alt_tab(root):
@@ -71,6 +23,22 @@ def _hide_from_alt_tab(root):
     style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
     style |= WS_EX_TOOLWINDOW
     ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+
+
+def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
+    return NekoStateMachine(
+        stop_time=config.get_int("duration.stop"),
+        wash_time=config.get_int("duration.wash"),
+        scratch_time=config.get_int("duration.scratch"),
+        yawn_time=config.get_int("duration.yawn"),
+        awake_time=config.get_int("duration.awake"),
+        claw_time=config.get_int("duration.claw"),
+        awake_rand=config.get_int("duration.awake_rand"),
+        min_speed=config.get_int("speed.min"),
+        max_speed=config.get_int("speed.max"),
+        idle_space=config.get_int("idle_space"),
+        offset=Point(config.get_int("offset.x"), config.get_int("offset.y")),
+    )
 
 
 if __name__ == "__main__":
@@ -90,23 +58,50 @@ if __name__ == "__main__":
 
     root.update()
 
-    icon_path = os.path.join(
-        files.get_project_root(), "resource", "neko", "Awake.ico"
+    project_root = files.get_project_root()
+    xdg_config_home = os.getenv(
+        "XDG_CONFIG_HOME",
+        os.path.join(os.path.expanduser("~"), ".config"),
     )
+    config = YamlConfigProvider(
+        default_path=os.path.join(
+            project_root, "config", "default_config.yml"
+        ),
+        user_path=os.path.join(xdg_config_home, "neko2020", "config.yml"),
+    )
+
+    cursor_provider = TkinterCursorProvider(root)
+
+    def session_factory():
+        renderer = TkinterRenderer(canvas, config)
+        state_machine = _build_state_machine(config)
+        return state_machine, renderer
+
+    def scheduler(delay_ms, callback):
+        root.after(delay_ms, callback)
+
+    service = AnimationService(
+        config=config,
+        cursor=cursor_provider,
+        session_factory=session_factory,
+        scheduler=scheduler,
+    )
+
+    icon_path = os.path.join(project_root, "resource", "neko", "Awake.ico")
     tray_icon = pystray.Icon(
         "neko",
         Image.open(icon_path),
         "neko",
         menu=pystray.Menu(
-            pystray.MenuItem("Stop", lambda i, item: stop(root)),
-            pystray.MenuItem("Start", lambda i, item: start(root, canvas)),
-            pystray.MenuItem("Restart", lambda i, item: restart(root, canvas)),
-            pystray.MenuItem("Quit", lambda i, item: quit(root)),
+            pystray.MenuItem("Stop", lambda i, item: service.stop()),
+            pystray.MenuItem("Start", lambda i, item: service.start()),
+            pystray.MenuItem("Restart", lambda i, item: service.restart()),
+            pystray.MenuItem("Quit", lambda i, item: root.quit()),
         ),
     )
     tray_icon.run_detached()
 
-    start(root, canvas)
+    service.start()
     root.mainloop()
 
     tray_icon.stop()
