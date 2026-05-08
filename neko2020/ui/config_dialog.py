@@ -137,19 +137,22 @@ class ConfigDialog:
 
         self._vars: dict[str, tk.Variable] = {}
 
+        notebook = ttk.Notebook(outer)
+        notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
         for section_title, section_desc, fields in _SECTIONS:
-            lf = ttk.LabelFrame(outer, text=section_title, padding=(8, 6))
-            lf.pack(fill=tk.X, pady=(0, 8))
+            tab = tk.Frame(notebook, padx=10, pady=8)
+            notebook.add(tab, text=section_title)
 
             tk.Label(
-                lf,
+                tab,
                 text=section_desc,
                 fg="#666666",
                 font=("TkDefaultFont", 8),
             ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
             for i, (path, label, _typ) in enumerate(fields, start=1):
-                tk.Label(lf, text=label + ":", anchor="w", width=22).grid(
+                tk.Label(tab, text=label + ":", anchor="w", width=22).grid(
                     row=i, column=0, sticky="w", pady=2
                 )
                 value = self._config.get_string(path)
@@ -157,7 +160,7 @@ class ConfigDialog:
                 self._vars[path] = var
                 if path == "animal":
                     combo = ttk.Combobox(
-                        lf,
+                        tab,
                         textvariable=var,
                         values=animals if animals else [value],
                         state="readonly",
@@ -167,12 +170,12 @@ class ConfigDialog:
                         row=i, column=1, sticky="w", pady=2, padx=(8, 0)
                     )
                 else:
-                    tk.Entry(lf, textvariable=var, width=10).grid(
+                    tk.Entry(tab, textvariable=var, width=10).grid(
                         row=i, column=1, sticky="w", pady=2, padx=(8, 0)
                     )
 
         ttk.Separator(outer, orient=tk.HORIZONTAL).pack(
-            fill=tk.X, pady=(2, 10)
+            fill=tk.X, pady=(0, 10)
         )
 
         btn_frame = tk.Frame(outer)
