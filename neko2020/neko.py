@@ -228,8 +228,14 @@ class Neko:
             self.pet.set_image(self.get_state_animation_frame_index())
         elif self.state in {
             # fmt: off
-            State.U_MOVE, State.D_MOVE, State.L_MOVE, State.R_MOVE,
-            State.UL_MOVE, State.UR_MOVE, State.DL_MOVE, State.DR_MOVE,
+            State.U_MOVE,
+            State.D_MOVE,
+            State.L_MOVE,
+            State.R_MOVE,
+            State.UL_MOVE,
+            State.UR_MOVE,
+            State.DL_MOVE,
+            State.DR_MOVE,
             # fmt: on
         }:
             x = self.pet.get_position().x
@@ -270,7 +276,10 @@ class Neko:
                 )
         elif self.state in {
             # fmt: off
-            State.U_CLAW, State.D_CLAW, State.L_CLAW, State.R_CLAW,
+            State.U_CLAW,
+            State.D_CLAW,
+            State.L_CLAW,
+            State.R_CLAW,
             # fmt: on
         }:
             if self.move_start():
