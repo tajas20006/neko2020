@@ -7,7 +7,7 @@ import yaml
 from neko2020.application.ports import IConfigProvider
 
 
-def _deep_merge(*dicts, update=False):
+def _deep_merge(*dicts):
     def merge_into(d1, d2):
         for key in d2:
             if key not in d1 or not isinstance(d1[key], dict):
@@ -16,10 +16,7 @@ def _deep_merge(*dicts, update=False):
                 d1[key] = merge_into(d1[key], d2[key])
         return d1
 
-    if update:
-        return reduce(merge_into, dicts[1:], dicts[0])
-    else:
-        return reduce(merge_into, dicts, {})
+    return reduce(merge_into, dicts, {})
 
 
 class YamlConfigProvider(IConfigProvider):
@@ -27,7 +24,6 @@ class YamlConfigProvider(IConfigProvider):
         self._default_path = default_path
         self._user_path = user_path
         self._config: dict = {}
-        self.reload()
 
     def reload(self) -> None:
         with open(self._default_path) as f:

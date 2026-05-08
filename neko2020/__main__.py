@@ -9,6 +9,7 @@ from neko2020.adapters.tkinter_cursor import TkinterCursorProvider
 from neko2020.adapters.tkinter_renderer import TkinterRenderer
 from neko2020.adapters.yaml_config import YamlConfigProvider
 from neko2020.application.animation_service import AnimationService
+from neko2020.application.ports import IConfigProvider
 from neko2020.domain.state_machine import NekoStateMachine
 from neko2020.domain.value_objects import Point
 from neko2020.infrastructure import files
@@ -24,7 +25,7 @@ def _hide_from_alt_tab(root):
     ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
 
 
-def _build_state_machine(config: YamlConfigProvider) -> NekoStateMachine:
+def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
     return NekoStateMachine(
         stop_time=config.get_int("duration.stop"),
         wash_time=config.get_int("duration.wash"),
@@ -86,9 +87,7 @@ if __name__ == "__main__":
         scheduler=scheduler,
     )
 
-    icon_path = os.path.join(
-        project_root, "resource", "neko", "Awake.ico"
-    )
+    icon_path = os.path.join(project_root, "resource", "neko", "Awake.ico")
     tray_icon = pystray.Icon(
         "neko",
         Image.open(icon_path),
@@ -96,9 +95,7 @@ if __name__ == "__main__":
         menu=pystray.Menu(
             pystray.MenuItem("Stop", lambda i, item: service.stop()),
             pystray.MenuItem("Start", lambda i, item: service.start()),
-            pystray.MenuItem(
-                "Restart", lambda i, item: service.restart()
-            ),
+            pystray.MenuItem("Restart", lambda i, item: service.restart()),
             pystray.MenuItem("Quit", lambda i, item: root.quit()),
         ),
     )

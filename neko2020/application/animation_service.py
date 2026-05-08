@@ -1,4 +1,4 @@
-import time
+import threading
 from typing import Callable
 
 from neko2020.application.ports import (
@@ -28,6 +28,8 @@ class AnimationService:
         self._state_machine: NekoStateMachine | None = None
         self._renderer: IRenderer | None = None
         self._stopped = True
+        self._stopped_event = threading.Event()
+        self._stopped_event.set()
 
     def _delay_ms(self) -> int:
         return 1000 // self._config.get_int("fps")
@@ -36,6 +38,7 @@ class AnimationService:
         if not self._stopped:
             return
         self._stopped = False
+        self._stopped_event.clear()
         self._config.reload()
         self._state_machine, self._renderer = self._session_factory()
         self._tick()
@@ -48,14 +51,13 @@ class AnimationService:
         self._scheduler(self._delay_ms(), self._idle_pump)
 
     def restart(self) -> None:
-        delay = self._delay_ms()
         self.stop()
-        # let the old tick chain settle before starting fresh
-        time.sleep(2 * delay / 1000)
+        self._stopped_event.wait()
         self.start()
 
     def _tick(self) -> None:
         if self._stopped:
+            self._stopped_event.set()
             return
         cursor_pos = self._cursor.get_cursor_position()
         result = self._state_machine.tick(
