@@ -3,7 +3,8 @@ import time
 
 import ctypes
 import tkinter as tk
-from infi.systray import SysTrayIcon
+import pystray
+from PIL import Image
 
 from neko2020 import neko
 from neko2020.utils import files, configs
@@ -89,20 +90,23 @@ if __name__ == "__main__":
 
     root.update()
 
-    with SysTrayIcon(
-        icon=os.path.join(
-            files.get_project_root(),
-            "resource",
-            "neko",
-            "Awake.ico",
+    icon_path = os.path.join(
+        files.get_project_root(), "resource", "neko", "Awake.ico"
+    )
+    tray_icon = pystray.Icon(
+        "neko",
+        Image.open(icon_path),
+        "neko",
+        menu=pystray.Menu(
+            pystray.MenuItem("Stop", lambda i, item: stop(root)),
+            pystray.MenuItem("Start", lambda i, item: start(root, canvas)),
+            pystray.MenuItem("Restart", lambda i, item: restart(root, canvas)),
+            pystray.MenuItem("Quit", lambda i, item: quit(root)),
         ),
-        hover_text="neko",
-        menu_options=(
-            ("Stop", None, lambda _: stop(root)),
-            ("Start", None, lambda _: start(root, canvas)),
-            ("Restart", None, lambda _: restart(root, canvas)),
-        ),
-        on_quit=lambda _: quit(root),
-    ):
-        start(root, canvas)
-        root.mainloop()
+    )
+    tray_icon.run_detached()
+
+    start(root, canvas)
+    root.mainloop()
+
+    tray_icon.stop()
