@@ -13,12 +13,16 @@ class TkinterRenderer(IRenderer):
         self._bounds = Rect(0, 0, canvas.winfo_width(), canvas.winfo_height())
 
         pet_type = config.get_string("animal")
+        user_resource_base = files.get_user_resource_dir()
         if pet_type == "random":
-            pet_type = files.select_random_directory(
-                os.path.join(files.get_project_root(), "resource")
+            pet_type = files.select_random_directory_merged(
+                os.path.join(files.get_project_root(), "resource"),
+                user_resource_base,
             )
 
-        self._images, img_w, img_h = image_loader.load_images(pet_type)
+        self._images, img_w, img_h = image_loader.load_images(
+            pet_type, user_resource_base=user_resource_base
+        )
         self._size = Size(img_w, img_h)
         self._last_frame_index: int | None = None
 
