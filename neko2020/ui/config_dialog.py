@@ -60,15 +60,20 @@ def _all_fields():
 
 
 def _get_animals() -> list[str]:
-    resource_dir = os.path.join(files.get_project_root(), "resource")
-    try:
-        return sorted(
-            d
-            for d in os.listdir(resource_dir)
-            if os.path.isdir(os.path.join(resource_dir, d))
-        )
-    except OSError:
-        return []
+    dirs: set[str] = set()
+    for base in (
+        os.path.join(files.get_project_root(), "resource"),
+        files.get_user_resource_dir(),
+    ):
+        try:
+            dirs.update(
+                d
+                for d in os.listdir(base)
+                if os.path.isdir(os.path.join(base, d))
+            )
+        except OSError:
+            pass
+    return ["random"] + sorted(dirs)
 
 
 def _set_nested(d: dict, path: str, value) -> None:
