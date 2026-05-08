@@ -27,7 +27,7 @@ jobs:
         run: uv run pyinstaller neko2020.spec
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: neko2020-exe
           path: dist/neko2020.exe
