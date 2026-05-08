@@ -65,3 +65,8 @@ Create `resource/<name>/` with all 32 `.ico` files. File names must exactly matc
 
 - Ruff format with 79-character line length (enforced by pre-commit)
 - Ruff lint (E/F/W rules, enforced by pre-commit)
+
+## Git Workflow
+
+- Always branch from `develop`, not `master`
+- Always target `develop` as the PR base branch
