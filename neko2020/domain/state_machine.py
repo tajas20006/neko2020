@@ -169,23 +169,20 @@ class NekoStateMachine:
         self.to_x = new_x_target
         self.to_y = new_y_target
 
-        dx = (
-            self.to_x
-            - position.x
-            - size.cx / 2  # stop in middle of cursor
-            + self.offset.x  # custom offset
-        )
-        if self.to_y == bounds.bottom - 1:
-            # if cursor is at the very bottom, ignore offset
-            dy = self.to_y - position.y - size.cy
+        half_cx = size.cx // 2
+        half_cy = size.cy // 2
+        if self.to_x <= bounds.left + half_cx:
+            dx = bounds.left + half_cx - position.x
+        elif self.to_x >= bounds.right - half_cx:
+            dx = bounds.right - half_cx - position.x
         else:
-            dy = (
-                self.to_y
-                - position.y
-                - size.cy
-                + 1  # stop just above the cursor
-                + self.offset.y  # custom offset
-            )
+            dx = self.to_x - position.x + self.offset.x
+        if self.to_y <= bounds.top + half_cy:
+            dy = bounds.top + half_cy - position.y
+        elif self.to_y >= bounds.bottom - half_cy:
+            dy = bounds.bottom - half_cy - position.y
+        else:
+            dy = self.to_y - position.y + self.offset.y
         double_length = dx * dx + dy * dy
 
         if double_length != 0:
@@ -211,20 +208,15 @@ class NekoStateMachine:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
             elif self.state_count >= self.STOP_TIME:
-                if self.dx < 0 and position.x <= 0:
+                half_cx = size.cx // 2
+                half_cy = size.cy // 2
+                if position.x <= bounds.left + half_cx:
                     self._set_new_state(State.L_CLAW)
-                elif (
-                    self.dx > 0
-                    and position.x >= (bounds.right - bounds.left) - size.cx
-                ):
+                elif position.x >= bounds.right - half_cx:
                     self._set_new_state(State.R_CLAW)
-                elif self.dy < 0 and position.y <= 0:
+                elif position.y <= bounds.top + half_cy:
                     self._set_new_state(State.U_CLAW)
-                elif (
-                    self.dy >= 0
-                    and position.y
-                    >= (bounds.bottom - bounds.top) - size.cy + self.offset.y
-                ):
+                elif position.y >= bounds.bottom - half_cy:
                     self._set_new_state(State.D_CLAW)
                 else:
                     self._set_new_state(State.WASH)
@@ -265,22 +257,27 @@ class NekoStateMachine:
             y = position.y
             new_x = x + self.dx
             new_y = y + self.dy
-            width = (bounds.right - bounds.left) - size.cx
-            height = (bounds.bottom - bounds.top) - size.cy
+            x_min = bounds.left + size.cx // 2
+            x_max = bounds.right - size.cx // 2
+            y_min = bounds.top + size.cy // 2
+            y_max = bounds.bottom - size.cy // 2
             outside = (
-                new_x <= 0 or new_x >= width or new_y <= 0 or new_y >= height
+                new_x <= x_min
+                or new_x >= x_max
+                or new_y <= y_min
+                or new_y >= y_max
             )
 
             self._calc_direction()
 
-            if new_x < 0:
-                new_x = 0
-            elif new_x > width:
-                new_x = width
-            if new_y < 0:
-                new_y = 0
-            elif new_y > height:
-                new_y = height
+            if new_x < x_min:
+                new_x = x_min
+            elif new_x > x_max:
+                new_x = x_max
+            if new_y < y_min:
+                new_y = y_min
+            elif new_y > y_max:
+                new_y = y_max
             not_moved = new_x == x and new_y == y
 
             if outside and not_moved:

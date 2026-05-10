@@ -7,6 +7,7 @@ from neko2020.application.ports import (
     IRenderer,
 )
 from neko2020.domain.state_machine import NekoStateMachine
+from neko2020.domain.value_objects import Point, Rect
 
 
 SessionFactory = Callable[[], tuple[NekoStateMachine, IRenderer]]
@@ -20,11 +21,13 @@ class AnimationService:
         cursor: ICursorProvider,
         session_factory: SessionFactory,
         scheduler: Scheduler,
+        monitors: list[Rect],
     ):
         self._config = config
         self._cursor = cursor
         self._session_factory = session_factory
         self._scheduler = scheduler
+        self._monitors = monitors
         self._state_machine: NekoStateMachine | None = None
         self._renderer: IRenderer | None = None
         self._stopped = True
@@ -33,6 +36,12 @@ class AnimationService:
 
     def _delay_ms(self) -> int:
         return 1000 // self._config.get_int("fps")
+
+    def _monitor_for(self, cursor: Point) -> Rect:
+        for m in self._monitors:
+            if m.left <= cursor.x < m.right and m.top <= cursor.y < m.bottom:
+                return m
+        return self._monitors[0]
 
     def start(self) -> None:
         if not self._stopped:
@@ -64,7 +73,7 @@ class AnimationService:
             cursor_pos,
             self._renderer.get_position(),
             self._renderer.get_size(),
-            self._renderer.get_bounds(),
+            self._monitor_for(cursor_pos),
         )
         self._renderer.render(result.frame_index, result.x, result.y)
         self._scheduler(self._delay_ms(), self._tick)
