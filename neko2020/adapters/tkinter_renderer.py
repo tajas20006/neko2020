@@ -7,10 +7,23 @@ from neko2020.infrastructure import files, image_loader
 
 
 class TkinterRenderer(IRenderer):
-    def __init__(self, canvas, config: IConfigProvider):
+    def __init__(
+        self,
+        canvas,
+        config: IConfigProvider,
+        vx: int,
+        vy: int,
+        initial_position: Point,
+    ):
         self._canvas = canvas
-        self._position = Point(0, 0)
-        self._bounds = Rect(0, 0, canvas.winfo_width(), canvas.winfo_height())
+        # vx/vy: virtual-screen origin in screen coords; used to convert
+        # screen coordinates to canvas pixel coordinates.
+        self._vx = vx
+        self._vy = vy
+        self._position = initial_position
+        self._bounds = Rect(
+            vx, vy, vx + canvas.winfo_width(), vy + canvas.winfo_height()
+        )
 
         pet_type = config.get_string("animal")
         user_resource_base = files.get_user_resource_dir()
@@ -45,9 +58,10 @@ class TkinterRenderer(IRenderer):
         self._canvas.delete("all")
         self._position = new_position
         self._last_frame_index = frame_index
+        # Convert screen coords to canvas pixel coords.
         self._canvas.create_image(
-            self._position.x,
-            self._position.y,
+            x - self._vx,
+            y - self._vy,
             image=self._images[int(frame_index)],
-            anchor=tk.NW,
+            anchor=tk.CENTER,
         )
