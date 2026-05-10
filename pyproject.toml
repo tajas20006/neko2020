@@ -23,6 +23,29 @@ dev = [
     "pre-commit>=4.6.0",
     "pefile>=2024.8.26",
 ]
+imgen = [
+    "accelerate>=1.13.0",
+    "diffusers>=0.37.1",
+    "ollama>=0.4.0",
+    "rembg[cpu]>=2.0.0",
+    "safetensors>=0.7.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "transformers>=5.8.0",
+]
+imgen-gpt = [
+    "openai>=1.0.0",
+    "rembg[cpu]>=2.0.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+torchvision = { index = "pytorch" }
 
 [tool.ruff]
 line-length = 79
