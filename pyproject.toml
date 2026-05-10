@@ -1,13 +1,13 @@
 [project]
 name = "neko2020"
-version = "0.2.0"
+version = "0.2.1"
 description = "Cross-Platform oneko implementation with python"
 authors = [{ name = "Yoshioka Shun", email = "tajas2006@gmail.com" }]
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "pyyaml>=6.0.2",
-    "infi-systray>=0.1.12",
-    "pillow>=10.4.0",
+    "pyyaml>=6.0.3",
+    "pystray>=0.19.5",
+    "pillow>=12.2.0",
 ]
 
 [project.urls]
@@ -15,14 +15,37 @@ Repository = "https://github.com/tajas20006/neko2020"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.3",
-    "ruff>=0.9.0",
-    "pyinstaller>=6.10.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
+    "pyinstaller>=6.20.0",
     "pywin32-ctypes>=0.2.3",
+    "pywin32>=311",
+    "pre-commit>=4.6.0",
     "pefile>=2024.8.26",
-    "pywin32>=306",
-    "pre-commit>=3.8.0",
 ]
+imgen = [
+    "accelerate>=1.13.0",
+    "diffusers>=0.37.1",
+    "ollama>=0.4.0",
+    "rembg[cpu]>=2.0.0",
+    "safetensors>=0.7.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "transformers>=5.8.0",
+]
+imgen-gpt = [
+    "openai>=1.0.0",
+    "rembg[cpu]>=2.0.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+torchvision = { index = "pytorch" }
 
 [tool.ruff]
 line-length = 79
