@@ -8,9 +8,16 @@ Thanks to this article it was possible to find an additional icon library, which
 
 Windows
 -------------------
-Download the project using ``git clone``.
-Create a file ``%USERPROFILE%\.config\neko2020\config.yml`` and copy the contents of ``default_config.yml`` into it.
-Run neko2020.exe
+Download the project using ``git clone``, or grab the latest ``neko2020.exe``
+from the `Releases <https://github.com/tajas20006/neko2020/releases>`_ page.
+
+Run ``neko2020.exe``. A system tray icon will appear; right-click it to
+configure, start, stop, restart, or quit the application.
+
+A user config file is automatically loaded from
+``%USERPROFILE%\.config\neko2020\config.yml`` if it exists.  To customise
+settings, open the **Config** dialog from the tray menu — it writes the file
+for you.
 
 Linux
 -------------------
@@ -21,28 +28,56 @@ For Linux, we recommend to read the oneko original or the source code below.
 Configuring
 -------------------
 
-With config.yml you can customize the characteristics of your pet. To change the pet you need to change the value of the animal key to the name of any catalog from the resource directory.
+The easiest way to configure neko2020 is through the **Config** dialog in the
+system tray.  It lets you adjust the animal sprite, movement speed, behavior
+timing, and animation rate without editing files manually.
 
-You can extend the pet bibliotheca by adding your own icons to the resource catalog. The name of the subdirectory will become the name of the pet. The files must be in .ico format. The default scale is 32x32, but you can be whatever you want. Don't forget to rename the icons similarly to other pets.
+Alternatively you can create ``~/.config/neko2020/config.yml`` (or
+``%XDG_CONFIG_HOME%\neko2020\config.yml`` on Windows) and set only the keys
+you want to override — the file is deep-merged over the built-in defaults.
+
+Key configuration options:
+
+- ``animal`` — name of any subdirectory under ``resource/``, or ``"random"``
+  to pick a different sprite set each run.
+- ``speed.max`` / ``speed.min`` — pixels per frame the pet can travel.
+- ``fps`` — animation frame rate (frames per second).
+- ``duration.*`` — number of animation cycles spent in each idle action.
+- ``offset.x`` / ``offset.y`` — pixel offset of the sprite relative to the
+  cursor.
+
+You can extend the pet library by adding your own sprite sets.  Place a
+subdirectory containing 32 ``.ico`` files either in the ``resource/`` folder
+(next to the executable) or in ``~/.config/neko2020/resources/<name>/``.
+The subdirectory name becomes the animal name.  File names must exactly match
+those used by the built-in sets.
 
 Source and Building
 ------------------
 
-Supported version of ``Python 3.12``
-neko2020 uses the poetry dependency manager.
+Supported Python versions: ``3.12`` to ``3.13``.
 
-Run the dependency installation in the project folder with the poetry install command ``poetry install``
+neko2020 uses the `uv <https://github.com/astral-sh/uv>`_ package manager.
 
-To start Neko2020 run ``poetry run python -m neko2020``
-(or ``path/to/neko2020/.venv/Scripts/python -m neko2020`` to run from other directories.)
+Install dependencies::
 
-Whether you have made changes to the code or just decided to rebuild the file again run poetry run pyinstaller neko2020.spec and a new neko2020.exe will be created in the dist folder.
-``poetry run pyinstaller neko2020.spec``
+    uv sync
 
-For work on Linux, copy file ``cp config/default_config.yml $XDG_CONFIG_HOME/neko2020/config.yml``.
-If ``XDG_CONFIG_HOME`` is not set, it will default to ``$HOME/.config``.
+Run from source::
 
-For rebuilding the binary, I use pyinstaller to build the binary.
+    uv run python -m neko2020
+
+Build the standalone executable::
+
+    uv run pyinstaller neko2020.spec
+
+The executable will be created at ``dist/neko2020.exe``.
+
+For work on Linux, copy the default config::
+
+    cp config/default_config.yml $XDG_CONFIG_HOME/neko2020/config.yml
+
+If ``XDG_CONFIG_HOME`` is not set, it defaults to ``$HOME/.config``.
 
 Stopping Neko
 -------------
@@ -56,14 +91,15 @@ Console may go unresponsive.
 Other Commands
 -------------
 
+- Config
+
+  Opens a GUI dialog to adjust all settings. Changes are saved to your user
+  config and take effect immediately (the pet restarts briefly).
+
 - Start / Stop
 
   Use these to show / hide neko.
 
 - Restart
 
-  Use this after editing config.yml to apply the changes.
-
-TODOs
------
-- Does not work for dual displays.  Neko will run only in the main display.
+  Reloads the config and restarts the animation.
