@@ -4,7 +4,7 @@ Neko2020
 .. image:: https://github.com/tajas20006/neko2020/actions/workflows/ci.yml/badge.svg
    :target: https://github.com/tajas20006/neko2020/actions/workflows/ci.yml
 
-.. image:: https://codecov.io/gh/tajas20006/neko2020/branch/develop/graph/badge.svg
+.. image:: https://codecov.io/gh/tajas20006/neko2020/graph/badge.svg?token=PSWMUVM04P
    :target: https://codecov.io/gh/tajas20006/neko2020
 
 Neko2020 a reimagining of oneko for Windows implemented in Python.
