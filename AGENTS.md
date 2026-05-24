@@ -50,3 +50,4 @@ neko2020/
      Add project-specific conventions, gotchas, and workflow requirements here. -->
 
 - **Bump version before merging to master**: The CI workflow (`build-exe.yml`) creates a GitHub Release tagged with the version from `pyproject.toml`. Before any PR lands on master, update `version` in `pyproject.toml` to avoid overwriting an existing release tag.
+- **Run ruff format before every commit**: Always run `uv run ruff format neko2020/ tests/` (then `uv run ruff check neko2020/ tests/`) before staging and committing. The 79-char line limit is enforced by CI and will fail the build if violated.
