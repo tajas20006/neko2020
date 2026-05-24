@@ -640,8 +640,8 @@ dev = [
     { name = "pre-commit" },
     { name = "pyinstaller" },
     { name = "pytest" },
-    { name = "pywin32" },
-    { name = "pywin32-ctypes" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "pywin32-ctypes", marker = "sys_platform == 'win32'" },
     { name = "ruff" },
 ]
 
@@ -669,8 +669,8 @@ dev = [
     { name = "pre-commit", specifier = ">=4.6.0" },
     { name = "pyinstaller", specifier = ">=6.20.0" },
     { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pywin32", specifier = ">=311" },
-    { name = "pywin32-ctypes", specifier = ">=0.2.3" },
+    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=311" },
+    { name = "pywin32-ctypes", marker = "sys_platform == 'win32'", specifier = ">=0.2.3" },
     { name = "ruff", specifier = ">=0.15.12" },
 ]
 
