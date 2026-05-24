@@ -34,8 +34,8 @@ dev = [
     "pytest>=9.0.3",
     "ruff>=0.15.12",
     "pyinstaller>=6.20.0",
-    "pywin32-ctypes>=0.2.3",
-    "pywin32>=311",
+    "pywin32-ctypes>=0.2.3 ; sys_platform == 'win32'",
+    "pywin32>=311 ; sys_platform == 'win32'",
     "pre-commit>=4.6.0",
     "pefile>=2024.8.26",
 ]
