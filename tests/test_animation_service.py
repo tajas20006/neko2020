@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock
-import pytest
 
 from neko2020.application.animation_service import AnimationService
 from neko2020.domain.value_objects import Point, Rect, Size

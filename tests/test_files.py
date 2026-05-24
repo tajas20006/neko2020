@@ -66,7 +66,7 @@ def test_select_random_directory_returns_name_not_full_path(tmp_path):
     (tmp_path / "mydir").mkdir()
     result = select_random_directory(str(tmp_path))
     assert result == "mydir"
-    assert not os.path.sep in result
+    assert os.path.sep not in result
 
 
 # ---------------------------------------------------------------------------
