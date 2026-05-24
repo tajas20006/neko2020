@@ -69,7 +69,9 @@ def test_get_bounds_covers_canvas_area_with_offset():
 
 
 def test_get_bounds_zero_origin():
-    renderer, _c, _imgs = _make_renderer(vx=0, vy=0, canvas_w=1920, canvas_h=1080)
+    renderer, _c, _imgs = _make_renderer(
+        vx=0, vy=0, canvas_w=1920, canvas_h=1080
+    )
     assert renderer.get_bounds() == Rect(0, 0, 1920, 1080)
 
 
