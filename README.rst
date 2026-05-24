@@ -1,6 +1,9 @@
 Neko2020
 ========
 
+.. image:: https://github.com/tajas20006/neko2020/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/tajas20006/neko2020/actions/workflows/ci.yml
+
 Neko2020 a reimagining of oneko for Windows implemented in Python.
 
 If you are interested in the history of oneko you can read an interesting shortread from https://github.com/eliot-akira/neko.
