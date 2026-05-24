@@ -20,6 +20,9 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Install tkinter
+        run: sudo apt-get install -y python3-tk
+
       - name: Install dependencies
         run: uv sync --frozen
 
