@@ -27,4 +27,4 @@ jobs:
         run: uv run ruff check neko2020/ tests/
 
       - name: Pytest
-        run: uv run pytest
+        run: uv run --with pytest-cov pytest --cov=neko2020 --cov-report=term-missing
