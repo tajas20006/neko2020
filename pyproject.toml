@@ -16,7 +16,7 @@ Repository = "https://github.com/tajas20006/neko2020"
 [project.optional-dependencies]
 imgen = [
     "accelerate>=1.13.0",
-    "diffusers>=0.37.1",
+    "diffusers>=0.38.0",
     "ollama>=0.4.0",
     "rembg[cpu]>=2.0.0",
     "safetensors>=0.7.0",
