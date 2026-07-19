@@ -1,40 +1,56 @@
 ---
 title: Interfaces
-description: Public APIs between modules and external integration points
+description: Ports between layers, config YAML schema, sprite conventions, CI workflows
 ---
 
 # Interfaces
 
-## Module-Level APIs
-
-### `Neko` class (`neko.py`)
+## Application Ports (`application/ports.py`)
 
 ```python
-Neko(config: Config, screen: Size) -> Neko
-Neko.tick(cursor: Point) -> (state: str, frame: str, x: int, y: int)
+class IConfigProvider(ABC):
+    def get_int(path: str) -> int
+    def get_float(path: str) -> float
+    def get_string(path: str) -> str
+    def reload() -> None
+
+class ICursorProvider(ABC):
+    def get_cursor_position() -> Point
+
+class IRenderer(ABC):
+    def render(frame_index: int, x: int, y: int) -> None
+    def get_position() -> Point
+    def get_size() -> Size
+    def get_bounds() -> Rect
 ```
 
-`tick` is the only public method called each animation frame.
+Implementations live in `adapters/` (`YamlConfigProvider`, `TkinterCursorProvider`, `TkinterRenderer`). Config paths use dot notation into the merged YAML tree (e.g., `"speed.max"`, `"duration.stop"`).
 
-### `Pet` class (`pet.py`)
+## Domain API (`domain/state_machine.py`)
 
 ```python
-Pet(root: Tk, config: Config) -> Pet
-Pet.update(state: str, frame: str, x: int, y: int) -> None
-Pet.get_boundary() -> Rect
+NekoStateMachine(*, stop_time, wash_time, scratch_time, yawn_time,
+                 awake_time, claw_time, awake_rand, min_speed,
+                 max_speed, idle_space, offset: Point)
+
+NekoStateMachine.tick(
+    cursor: Point,      # current cursor position
+    position: Point,    # current pet position (from renderer)
+    size: Size,         # sprite size (for boundary insets)
+    bounds: Rect,       # monitor containing the cursor
+) -> TickResult         # (frame_index, x, y)
 ```
 
-`update` swaps the displayed sprite; `get_boundary` returns current screen bounds.
+`tick` is the only call per animation frame; `AnimationService` wires it to the renderer.
 
-### Config API (`utils/configs.py`)
+## AnimationService API (`application/animation_service.py`)
 
 ```python
-get_int(path: str) -> int
-get_float(path: str) -> float
-get_str(path: str) -> str
+AnimationService(config, cursor, session_factory, scheduler, monitors)
+service.start()    # build session via factory, begin ticking
+service.stop()     # halt ticks (idle pump keeps Tk alive)
+service.restart()  # stop, wait, start — reloads config and sprites
 ```
-
-Dot-notation paths into the merged YAML tree (e.g., `"speed.max"`, `"animal"`).
 
 ## Configuration Interface
 
@@ -46,8 +62,8 @@ speed:
   min: 2
 offset:
   x: 0
-  y: -50
-time:
+  y: -35
+duration:
   stop: 4
   wash: 10
   scratch: 4
@@ -57,29 +73,30 @@ time:
   awake_rand: 20
 idle_space: 10
 animal: neko
-fps: 300
+fps: 4
 ```
 
-**User config** location: `~/.config/neko2020/config.yml` (or `$XDG_CONFIG_HOME/neko2020/config.yml`). Any key overrides the default.
+**User config** location: `~/.config/neko2020/config.yml` (respects `XDG_CONFIG_HOME`). Any key overrides the default via deep merge. The tray **Config** dialog (`ui/config_dialog.py`) writes this file (backing up the previous version to `config.yml.bak`) and restarts the animation.
 
 ## Sprite Resource Interface
 
-Each animal directory under `resource/<animal>/` must contain exactly 32 `.ico` files named according to the hard-coded list in `utils/images.py`. Adding a new animal type requires a directory with all 32 frames.
+Each animal directory must contain exactly 32 `.ico` files named according to the hard-coded ordered list in `infrastructure/image_loader.py`. Lookup order: `~/.config/neko2020/resources/<animal>/` first, then bundled `resource/<animal>/`. `animal: random` picks a random directory across both. The `tools/` scripts generate conforming sets with AI (see `tools/README.md`).
 
 ## System Tray Interface
 
-The system tray icon exposes four commands via `infi-systray`:
+`pystray.Icon` menu in `__main__.py`:
 
 | Label | Action |
 |---|---|
-| Start | Resume animation |
+| Config (default, double-click) | Open the settings dialog |
 | Stop | Pause animation |
-| Restart | Recreate Neko and Pet |
+| Start | Resume animation (rebuilds session) |
+| Restart | Reload config, recreate state machine + renderer |
 | Quit | Exit the process |
 
 ## GitHub Actions / CI
 
-Two workflows in `.github/workflows/`:
-
-- **claude.yml** — Responds to `@claude` mentions in PR/issue comments using `anthropics/claude-code-action@v1`
-- **claude-code-review.yml** — Runs automated code review on every PR using the same action with `code-review` plugin
+- **ci.yml** — pytest + coverage upload to Codecov
+- **build-exe.yml** — PyInstaller build; GitHub Release tagged with the `pyproject.toml` version (bump before merging to master)
+- **claude.yml** — responds to `@claude` mentions in PR/issue comments
+- **claude-code-review.yml** — automated review on every PR

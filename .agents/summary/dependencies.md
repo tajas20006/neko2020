@@ -9,46 +9,49 @@ description: External dependencies and their usage
 
 | Package | Version | Usage |
 |---|---|---|
-| `pyyaml` | ^6.0.2 | Parsing `config/*.yml` and user config |
-| `infi-systray` | ^0.1.12 | Windows system tray icon and menu |
-| `pillow` | ^10.4.0 | Loading `.ico` sprite files; `ImageTk.PhotoImage` for Tkinter |
+| `pyyaml` | >=6.0.3 | Parsing `config/*.yml` and user config |
+| `pystray` | >=0.19.5 | System tray icon and menu (runs detached) |
+| `pillow` | >=12.2.0 | Loading `.ico` sprites; `ImageTk.PhotoImage` for Tkinter |
+
+## Optional Extras (sprite generation, `tools/`)
+
+| Extra | Packages | Usage |
+|---|---|---|
+| `imgen` | torch, torchvision, diffusers, transformers, accelerate, safetensors, ollama, rembg | Local Stable Diffusion sprite generation (CUDA GPU) |
+| `imgen-gpt` | openai, rembg | OpenAI gpt-image sprite generation |
 
 ## Standard Library (key modules)
 
 | Module | Usage |
 |---|---|
-| `tkinter` | Fullscreen transparent window, canvas drawing |
-| `ctypes` | Windows API calls (`SetWindowLong`, `GetCursorPos`, transparency) |
-| `math` | `sin`/`atan2` for 8-directional angle calculation |
-| `os`, `pathlib` | Resource path resolution |
-| `threading` | System tray runs on a background thread |
+| `tkinter` | Transparent overlay window, canvas drawing, config dialog |
+| `ctypes` | Win32 calls: `EnumDisplayMonitors`, `SetWindowLongW`, `SetWindowPos` |
+| `math`, `random` | 8-directional angle calculation; timing jitter; random animal |
+| `abc` | Port interfaces in `application/ports.py` |
+| `threading` | Restart synchronization (`Event`); dialog-triggered restart thread |
 
-## Build / Distribution
+## Development (dependency-group `dev`)
 
-| Package | Version | Usage |
-|---|---|---|
-| `pyinstaller` | ^6.10.0 | Compiles to standalone `dist/neko2020.exe` |
-| `pywin32-ctypes` | ^0.2.3 | Required by PyInstaller on Windows |
-| `pefile` | ^2024.8.26 | PE file manipulation (PyInstaller support) |
-| `pywin32` | ^306 | Windows API bindings |
-
-## Development
-
-| Package | Version | Usage |
-|---|---|---|
-| `pytest` | ^8.3.3 | Test runner |
-| `black` | ^24.8.0 | Auto-formatter (79-char line length) |
-| `flake8` | ^7.1.1 | Linter |
-| `pre-commit` | ^3.8.0 | Git hooks (runs black + flake8 on commit) |
+| Package | Usage |
+|---|---|
+| `pytest` | Test runner (CI uploads coverage to Codecov) |
+| `ruff` | Formatter + linter (79-char lines, E/F/W rules) |
+| `pre-commit` | Git hooks running ruff format + lint |
+| `pyinstaller` | Compiles to standalone `dist/neko2020.exe` |
+| `pywin32`, `pywin32-ctypes`, `pefile` | Windows build support (win32 only markers) |
 
 ## CI
 
-| Tool | Usage |
+| Workflow | Usage |
 |---|---|
-| `anthropics/claude-code-action@v1` | AI-powered PR assistant and code review via GitHub Actions |
-| Dependabot | Daily pip dependency updates (max 10 open PRs) |
+| `ci.yml` | Runs pytest with coverage → Codecov |
+| `build-exe.yml` | Builds the exe and creates a GitHub Release tagged from `pyproject.toml` version (master) |
+| `claude.yml` | Responds to `@claude` mentions via `anthropics/claude-code-action@v1` |
+| `claude-code-review.yml` | Automated review on every PR |
+| Dependabot | Dependency update PRs (uv + GitHub Actions) |
 
 ## Platform Constraints
 
-- Runtime is **Windows-only** (`ctypes` calls use Win32 API, `infi-systray` is Windows-only)
+- Runtime is **Windows-only** — the overlay setup in `__main__.py` uses Win32 ctypes calls with no non-Windows code path (pystray itself is cross-platform)
 - Python `>=3.12,<3.14` required
+- Package management via **uv** (`uv.lock`); build backend hatchling

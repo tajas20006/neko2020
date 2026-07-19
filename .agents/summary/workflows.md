@@ -11,18 +11,20 @@ description: Key runtime and development workflows
 sequenceDiagram
     participant OS as Windows OS
     participant Main as __main__.py
-    participant Config as configs.py
-    participant Pet as pet.py
-    participant Neko as neko.py
+    participant Service as AnimationService
+    participant Renderer as TkinterRenderer
+    participant SM as NekoStateMachine
 
-    Main->>Config: load default + user config
-    Main->>OS: create fullscreen Tkinter window
-    Main->>OS: apply WS_EX_TRANSPARENT flags (ctypes)
-    Main->>Pet: Pet(root, config)
-    Pet->>Pet: load sprites for animal
-    Main->>Neko: Neko(config, screen_size)
-    Main->>OS: register system tray icon
-    Main->>Main: root.after(fps, tick)
+    Main->>OS: EnumDisplayMonitors (per-display rects)
+    Main->>OS: create virtual-screen Tkinter window
+    Main->>OS: transparentcolor + WS_EX_TOOLWINDOW + SetWindowPos
+    Main->>Main: build YamlConfigProvider, cursor provider
+    Main->>Service: AnimationService(config, cursor, factory, after, monitors)
+    Main->>OS: pystray icon (detached thread)
+    Main->>Service: start()
+    Service->>Service: config.reload()
+    Service->>Renderer: factory: load sprites, start at cursor
+    Service->>SM: factory: build from duration.*/speed.* config
     Main->>Main: root.mainloop()
 ```
 
@@ -30,51 +32,56 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Main as __main__.py
-    participant Neko as neko.py
-    participant Pet as pet.py
-    participant OS as Windows OS
+    participant Service as AnimationService
+    participant Cursor as TkinterCursorProvider
+    participant SM as NekoStateMachine
+    participant Renderer as TkinterRenderer
 
-    Main->>OS: GetCursorPos()
-    OS-->>Main: cursor Point
-    Main->>Neko: tick(cursor)
-    Neko->>Neko: calc direction angle
-    Neko->>Neko: advance state machine
-    Neko->>Neko: move position toward cursor
-    Neko-->>Main: (state, frame_name, x, y)
-    Main->>Pet: update(state, frame_name, x, y)
-    Pet->>Pet: swap PhotoImage on canvas
-    Main->>Main: root.after(fps, tick)
+    Service->>Cursor: get_cursor_position()
+    Cursor-->>Service: Point
+    Service->>Service: pick monitor rect containing cursor
+    Service->>SM: tick(cursor, position, size, bounds)
+    SM->>SM: velocity toward cursor (capped, clamped)
+    SM->>SM: advance state machine + frame cycle
+    SM-->>Service: TickResult(frame_index, x, y)
+    Service->>Renderer: render(frame_index, x, y)
+    Renderer->>Renderer: redraw canvas image if changed
+    Service->>Service: root.after(1000 // fps, tick)
 ```
 
 ## State Transition (idle path)
 
-```mermaid
-sequenceDiagram
-    participant Neko
-    Note over Neko: cursor stops moving
-    Neko->>Neko: STOP (count ticks up to stop_time)
-    Neko->>Neko: WASH (count up to wash_time)
-    Neko->>Neko: SCRATCH (count up to scratch_time)
-    Neko->>Neko: YAWN (count up to yawn_time)
-    Neko->>Neko: SLEEP (loop until cursor moves)
-    Note over Neko: cursor moves
-    Neko->>Neko: AWAKE (brief wake animation)
-    Neko->>Neko: *_MOVE toward cursor
-```
+When the cursor stops moving (within `idle_space`):
+
+1. `STOP` — after `duration.stop`: → `WASH` mid-screen, or → `*_CLAW` if pinned at a screen edge
+2. `WASH` → `SCRATCH` → `YAWN` → `SLEEP` (each after its `duration.*`)
+3. `SLEEP` loops until the cursor moves
+4. Cursor moves → `AWAKE` (brief, with random extra delay up to `duration.awake_rand`) → one of 8 `*_MOVE` states toward the cursor
+5. Reaching the cursor (or being pinned at a boundary) → `STOP`
+
+## Config Change (tray → dialog)
+
+1. Tray **Config** opens `ConfigDialog` (tabbed form generated from a field list)
+2. Apply validates fields, writes `~/.config/neko2020/config.yml` (previous file backed up to `.bak`)
+3. `AnimationService.restart()` runs on a background thread: stops the loop, reloads config, rebuilds state machine + renderer (new animal/speed/fps take effect)
 
 ## Development Workflow
 
 ```
-poetry install          # install all deps including dev
-poetry run python -m neko2020  # run from source
-pre-commit install      # wire up black + flake8 hooks
-poetry run pytest       # run tests
-poetry run pyinstaller neko2020.spec  # build dist/neko2020.exe
+uv sync                          # install all deps (creates uv.lock)
+uv run python -m neko2020        # run from source
+uv run pre-commit install        # wire up ruff format + lint hooks
+uv run pytest                    # run tests
+uv run ruff format neko2020/ tests/   # format (run before every commit)
+uv run ruff check neko2020/ tests/    # lint
+uv run pyinstaller neko2020.spec # build dist/neko2020.exe
 ```
+
+Git flow: branch from `develop`, PR back to `develop`. Bump `version` in `pyproject.toml` before anything merges to `master` (the release workflow tags from it).
 
 ## Adding a New Animal Type
 
-1. Create `resource/<animal_name>/` directory
-2. Add all 32 `.ico` files named exactly as the hard-coded list in `utils/images.py`
-3. Set `animal: <animal_name>` in `~/.config/neko2020/config.yml`, or use `"random"` to include it in rotation
+1. Create `resource/<animal_name>/` (bundled) or `~/.config/neko2020/resources/<animal_name>/` (user-local)
+2. Add all 32 `.ico` files named exactly as the hard-coded list in `infrastructure/image_loader.py`
+3. Set `animal: <animal_name>` in the user config (or pick it in the Config dialog), or use `"random"` to include it in rotation
+4. Alternatively generate a set with AI: `tools/generate_pet_gpt.py` (OpenAI) or `tools/generate_pet.py` (local Stable Diffusion) — see `tools/README.md`
