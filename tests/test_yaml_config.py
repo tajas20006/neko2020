@@ -113,6 +113,29 @@ def test_get_string(tmp_path):
     assert p.get_string("animal") == "neko"
 
 
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("true", True),
+        ("True", True),
+        ("1", True),
+        ("yes", True),
+        ("on", True),
+        ("false", False),
+        ("False", False),
+        ("0", False),
+        ("no", False),
+        ("off", False),
+    ],
+)
+def test_get_bool(tmp_path, raw, expected):
+    f = tmp_path / "d.yml"
+    f.write_text(f"wander:\n  enabled: {raw}\n")
+    p = YamlConfigProvider(str(f), str(tmp_path / "x.yml"))
+    p.reload()
+    assert p.get_bool("wander.enabled") is expected
+
+
 def test_get_nested_value_via_dot_notation(tmp_path):
     f = tmp_path / "d.yml"
     f.write_text("speed:\n  max: 60\n")

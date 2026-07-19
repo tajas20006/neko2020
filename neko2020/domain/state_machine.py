@@ -58,6 +58,9 @@ class NekoStateMachine:
         max_speed: int,
         idle_space: int,
         offset: Point,
+        wander_enabled: bool = False,
+        wander_time: int = 100,
+        wander_rand: int = 100,
     ):
         self.STOP_TIME = stop_time
         self.WASH_TIME = wash_time
@@ -66,6 +69,9 @@ class NekoStateMachine:
         self.AWAKE_TIME = awake_time
         self.CLAW_TIME = claw_time
         self.AWK_RND = awake_rand
+        self.wander_enabled = wander_enabled
+        self.WANDER_TIME = wander_time
+        self.WANDER_RND = wander_rand
 
         self.animation = {
             State.STOP: [28, 28, 28, 28],
@@ -103,6 +109,7 @@ class NekoStateMachine:
         self.tick_count = 0
         self.state_count = 0
         self.state = State.STOP
+        self.wander_target: Point | None = None
 
     def _move_start(self):
         return (
@@ -146,10 +153,21 @@ class NekoStateMachine:
     def _set_new_state(self, state):
         if self.state == state:
             return
+        if state == State.STOP:
+            # arrived (or gave up): resume the normal idle cycle
+            self.wander_target = None
         self.tick_count = 0
         self.state_count = 0
         self.state = state
         return self.state
+
+    def _pick_wander_target(self, size: Size, bounds: Rect) -> Point:
+        half_cx = size.cx // 2
+        half_cy = size.cy // 2
+        return Point(
+            random.randint(bounds.left + half_cx, bounds.right - half_cx),
+            random.randint(bounds.top + half_cy, bounds.bottom - half_cy),
+        )
 
     def _frame_index(self):
         return self.animation[self.state][self.tick_count]
@@ -161,28 +179,36 @@ class NekoStateMachine:
         size: Size,
         bounds: Rect,
     ) -> TickResult:
-        new_x_target = cursor.x
-        new_y_target = cursor.y
-
         self.old_x = self.to_x
         self.old_y = self.to_y
-        self.to_x = new_x_target
-        self.to_y = new_y_target
+        self.to_x = cursor.x
+        self.to_y = cursor.y
+
+        # real cursor movement always cancels wandering
+        if self.wander_target is not None and self._move_start():
+            self.wander_target = None
+
+        if self.wander_target is not None:
+            target_x = self.wander_target.x
+            target_y = self.wander_target.y
+        else:
+            target_x = cursor.x
+            target_y = cursor.y
 
         half_cx = size.cx // 2
         half_cy = size.cy // 2
-        if self.to_x <= bounds.left + half_cx:
+        if target_x <= bounds.left + half_cx:
             dx = bounds.left + half_cx - position.x
-        elif self.to_x >= bounds.right - half_cx:
+        elif target_x >= bounds.right - half_cx:
             dx = bounds.right - half_cx - position.x
         else:
-            dx = self.to_x - position.x + self.offset.x
-        if self.to_y <= bounds.top + half_cy:
+            dx = target_x - position.x + self.offset.x
+        if target_y <= bounds.top + half_cy:
             dy = bounds.top + half_cy - position.y
-        elif self.to_y >= bounds.bottom - half_cy:
+        elif target_y >= bounds.bottom - half_cy:
             dy = bounds.bottom - half_cy - position.y
         else:
-            dy = self.to_y - position.y + self.offset.y
+            dy = target_y - position.y + self.offset.y
         double_length = dx * dx + dy * dy
 
         if double_length != 0:
@@ -237,6 +263,11 @@ class NekoStateMachine:
                 self._set_new_state(State.SLEEP)
         elif self.state == State.SLEEP:
             if self._move_start():
+                self._set_new_state(State.AWAKE)
+            elif self.wander_enabled and self.state_count >= (
+                self.WANDER_TIME + int(random.random() * self.WANDER_RND)
+            ):
+                self.wander_target = self._pick_wander_target(size, bounds)
                 self._set_new_state(State.AWAKE)
         elif self.state == State.AWAKE:
             if self.state_count >= self.AWAKE_TIME + int(
