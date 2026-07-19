@@ -8,37 +8,41 @@ description: Basic metadata about the neko2020 project
 | Field | Value |
 |---|---|
 | Name | neko2020 |
-| Version | 0.1.2 |
-| Language | Python 3.12+ |
+| Version | 0.2.1 |
+| Language | Python >=3.12,<3.14 |
 | License | MIT |
-| Build System | Poetry |
+| Build System | uv + hatchling |
 | Repository | https://github.com/tajas20006/neko2020 |
 
 ## Description
 
-Cross-platform desktop pet (oneko-style) implemented in Python. A transparent overlay window renders an animated sprite that chases the mouse cursor, with system tray controls and 50+ configurable animal types.
+Desktop pet (oneko-style) for Windows implemented in Python. A transparent overlay window spanning all monitors renders an animated sprite that chases the mouse cursor, with system tray controls, a settings dialog, and 70+ animal sprite sets (plus AI generators for custom sets).
 
 ## Directory Layout
 
 ```
 neko2020/
-├── neko2020/          # Main source package
-│   ├── __main__.py    # Entry point, Tkinter window & system tray
-│   ├── neko.py        # State machine & movement logic
-│   ├── pet.py         # Visual rendering (canvas + sprites)
-│   └── utils/         # Data classes, config, file helpers, image loader
-├── config/            # default_config.yml
-├── resource/          # 50+ animal sprite sets (32 .ico frames each)
-├── tests/             # pytest test suite
-└── .github/workflows/ # Claude Code GitHub Actions CI
+├── neko2020/            # Main source package (clean-architecture layers)
+│   ├── __main__.py      # Composition root: window, tray, wiring
+│   ├── domain/          # state_machine.py, value_objects.py (pure logic)
+│   ├── application/     # animation_service.py, ports.py (ABCs)
+│   ├── adapters/        # tkinter_renderer.py, tkinter_cursor.py,
+│   │                    #   yaml_config.py
+│   ├── infrastructure/  # files.py, image_loader.py
+│   └── ui/              # config_dialog.py
+├── config/              # default_config.yml
+├── resource/            # 70+ animal sprite sets (32 .ico frames each)
+├── tools/               # AI sprite-set generation scripts
+├── tests/               # pytest test suite (per-module test files)
+└── .github/workflows/   # CI, release build, Claude Code actions
 ```
 
 ## Technology Stack
 
-- **GUI**: Tkinter (transparent overlay, canvas drawing)
+- **GUI**: Tkinter (transparent overlay, canvas drawing, config dialog)
 - **Images**: Pillow (PIL)
 - **Config**: PyYAML
-- **System Tray**: infi-systray
-- **Windows API**: ctypes, pywin32
-- **Distribution**: PyInstaller (single .exe)
-- **Quality**: black, flake8, pre-commit
+- **System Tray**: pystray
+- **Windows API**: ctypes (monitor enumeration, window styles)
+- **Distribution**: PyInstaller (single .exe, released via GitHub Actions)
+- **Quality**: ruff (format + lint), pre-commit, pytest + Codecov

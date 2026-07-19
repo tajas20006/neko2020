@@ -1,33 +1,30 @@
 ---
 title: Review Notes
-description: Documentation review: consistency and completeness findings
+description: Known gaps, platform limitations, and cleanup candidates
 ---
 
 # Review Notes
 
-## Consistency
-
-No inconsistencies found across the generated documentation files.
-
 ## Completeness Gaps
 
-### Minimal test coverage
-`tests/test_neko2020.py` contains only a version assertion. The state machine (`neko.py`) and config merge logic (`utils/configs.py`) have no test coverage. Any agent helping with testing should note this gap.
-
-### Hard-coded icon name list
-`utils/images.py` contains a hard-coded list of 32 icon names. This list is not documented anywhere — anyone adding a new animal type must reverse-engineer it from the source. Consider extracting it to a constant or config.
+### `speed.min` is unused
+`NekoStateMachine` stores `min_speed` and the config dialog exposes "Min Speed", but nothing reads it — only `speed.max` affects movement. Either implement a behavior for it or remove it from the config, dialog, and constructor.
 
 ### Windows-only — no cross-platform path
-Despite the project description saying "Cross-Platform," the implementation uses Windows-specific APIs exclusively (`ctypes` Win32 calls, `infi-systray`). There is no Linux/macOS code path. This discrepancy is not noted in the README.
+The project description historically said "Cross-Platform," but the overlay setup uses Win32-specific ctypes calls (monitor enumeration, window styles, `SetWindowPos`) with no Linux/macOS code path. `pystray` and the ports-and-adapters structure would support adding one.
 
-### No dual-monitor support
-README notes this limitation but there is no tracking issue or planned fix documented.
+### Hard-coded icon name list
+The ordered list of 32 icon names lives in `infrastructure/image_loader.py`; the per-state frame indices in `domain/state_machine.py` depend on that exact order. Anyone adding sprites must match both. The `tools/` generators produce conforming sets.
 
-### Per-animal config override
-README mentions per-animal config customization but the implementation does not clearly support it. Worth verifying.
+### UI layer untested
+`ui/config_dialog.py` and `__main__.py` have no test coverage (they require a live Tk/Win32 environment). Domain, application, adapters, and infrastructure modules each have a test file under `tests/`.
+
+## Cleanup Candidates
+
+- `neko2020/utils/` may linger as an empty directory (only `__pycache__`) from the pre-layers refactor; the modules moved into `domain/`, `adapters/`, and `infrastructure/`.
 
 ## Recommendations
 
-1. Add unit tests for `Neko` state transitions and `configs.py` deep merge
-2. Document the required 32 icon names in `interfaces.md` or a dedicated sprite spec
-3. Update project description to clarify Windows-only status
+1. Resolve `speed.min` (implement or remove)
+2. Consider extracting the movement math from `NekoStateMachine.tick()` into a dedicated domain helper to shrink the 140-line method and ease testing
+3. If cross-platform support is ever wanted, add a platform adapter for the overlay window alongside the existing Tkinter adapters
