@@ -316,3 +316,90 @@ def test_frame_index_for_stop_state_is_constant():
     # cursor at (0,0) stays in STOP (no cursor jump from initial to_x=0)
     result = sm.tick(Point(0, 0), CENTER, SIZE, BOUNDS)
     assert result.frame_index == 28  # animation[STOP] = [28, 28, 28, 28]
+
+
+# ---------------------------------------------------------------------------
+# Idle wandering
+# ---------------------------------------------------------------------------
+
+IDLE_CURSOR = Point(0, 0)
+
+
+def make_sleeping_sm(**overrides):
+    sm = make_sm(
+        stop_time=2,
+        wash_time=2,
+        scratch_time=2,
+        yawn_time=2,
+        awake_time=1,
+        **overrides,
+    )
+    tick_n(sm, 16, IDLE_CURSOR)
+    assert sm.state == State.SLEEP
+    return sm
+
+
+def test_wander_triggers_after_sleeping_long_enough():
+    sm = make_sleeping_sm(wander_enabled=True, wander_time=2, wander_rand=0)
+    # state_count increments every 2 ticks; below threshold → still asleep
+    tick_n(sm, 3, IDLE_CURSOR)
+    assert sm.state == State.SLEEP
+    tick_n(sm, 1, IDLE_CURSOR)
+    assert sm.state == State.AWAKE
+    assert sm.wander_target is not None
+
+
+def test_wander_disabled_sleeps_forever():
+    sm = make_sleeping_sm(wander_enabled=False, wander_time=2, wander_rand=0)
+    tick_n(sm, 50, IDLE_CURSOR)
+    assert sm.state == State.SLEEP
+    assert sm.wander_target is None
+
+
+def test_wander_target_is_within_bounds():
+    sm = make_sleeping_sm(wander_enabled=True, wander_time=2, wander_rand=0)
+    tick_n(sm, 4, IDLE_CURSOR)
+    target = sm.wander_target
+    assert BOUNDS.left + SIZE.cx // 2 <= target.x
+    assert target.x <= BOUNDS.right - SIZE.cx // 2
+    assert BOUNDS.top + SIZE.cy // 2 <= target.y
+    assert target.y <= BOUNDS.bottom - SIZE.cy // 2
+
+
+def test_wander_moves_toward_target(monkeypatch):
+    monkeypatch.setattr(
+        NekoStateMachine,
+        "_pick_wander_target",
+        lambda self, size, bounds: Point(1500, 540),
+    )
+    sm = make_sleeping_sm(wander_enabled=True, wander_time=2, wander_rand=0)
+    tick_n(sm, 4, IDLE_CURSOR)  # SLEEP → AWAKE with wander target
+    assert sm.wander_target == Point(1500, 540)
+    # AWAKE waits awake_time, then picks a direction toward the target
+    result = tick_n(sm, 3, IDLE_CURSOR)
+    assert sm.state == State.R_MOVE
+    assert result.x > CENTER.x
+
+
+def test_cursor_movement_cancels_wander(monkeypatch):
+    monkeypatch.setattr(
+        NekoStateMachine,
+        "_pick_wander_target",
+        lambda self, size, bounds: Point(1500, 540),
+    )
+    sm = make_sleeping_sm(wander_enabled=True, wander_time=2, wander_rand=0)
+    tick_n(sm, 7, IDLE_CURSOR)  # wandering: R_MOVE toward (1500, 540)
+    assert sm.state == State.R_MOVE
+    sm.tick(Point(300, 540), CENTER, SIZE, BOUNDS)
+    assert sm.wander_target is None
+    # next direction calc chases the real cursor (left of center)
+    sm.tick(Point(300, 540), CENTER, SIZE, BOUNDS)
+    assert sm.state == State.L_MOVE
+
+
+def test_reaching_stop_clears_wander_target():
+    sm = make_sm(wander_enabled=True, wander_time=2, wander_rand=0)
+    sm.wander_target = Point(1500, 540)
+    sm.state = State.R_MOVE
+    sm._set_new_state(State.STOP)
+    assert sm.wander_target is None

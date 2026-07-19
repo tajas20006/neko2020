@@ -47,6 +47,16 @@ _SECTIONS: list[tuple[str, str, list[tuple[str, str, type]]]] = [
         ],
     ),
     (
+        "Wandering",
+        "Let a sleeping pet occasionally wake up and walk to a random "
+        "spot instead of sleeping forever.",
+        [
+            ("wander.enabled", "Enable Wandering", bool),
+            ("wander.sleep_time", "Sleep Before Wander", int),
+            ("wander.rand", "Wander Variance", int),
+        ],
+    ),
+    (
         "Performance",
         "Lower FPS reduces CPU usage; higher makes motion smoother.",
         [("fps", "FPS", int)],
@@ -156,10 +166,17 @@ class ConfigDialog:
                 font=("TkDefaultFont", 8),
             ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
-            for i, (path, label, _typ) in enumerate(fields, start=1):
+            for i, (path, label, typ) in enumerate(fields, start=1):
                 tk.Label(tab, text=label + ":", anchor="w", width=22).grid(
                     row=i, column=0, sticky="w", pady=2
                 )
+                if typ is bool:
+                    bool_var = tk.BooleanVar(value=self._config.get_bool(path))
+                    self._vars[path] = bool_var
+                    tk.Checkbutton(tab, variable=bool_var).grid(
+                        row=i, column=1, sticky="w", pady=2, padx=(8, 0)
+                    )
+                    continue
                 value = self._config.get_string(path)
                 var = tk.StringVar(value=value)
                 self._vars[path] = var
@@ -200,7 +217,10 @@ class ConfigDialog:
     def _collect(self) -> dict | None:
         data: dict = {}
         for path, label, typ in _all_fields():
-            raw = self._vars[path].get().strip()
+            if typ is bool:
+                _set_nested(data, path, bool(self._vars[path].get()))
+                continue
+            raw = str(self._vars[path].get()).strip()
             if typ is int:
                 try:
                     val: int | str = int(raw)
