@@ -96,7 +96,7 @@ class _FakeVar:
         self._value = value
 
 
-def _make_dialog_with_vars(overrides: dict[str, str], initial_fps=4):
+def _make_dialog_with_vars(overrides: dict[str, str | bool], initial_fps=4):
     dialog = ConfigDialog(
         parent=MagicMock(),
         config=MagicMock(),
@@ -119,6 +119,9 @@ def _make_dialog_with_vars(overrides: dict[str, str], initial_fps=4):
         "duration.awake": "3",
         "duration.claw": "10",
         "duration.awake_rand": "20",
+        "wander.enabled": False,
+        "wander.sleep_time": "100",
+        "wander.rand": "100",
         "fps": "4",
         "frame_hold": "1",
     }
