@@ -6,6 +6,7 @@ from tkinter import messagebox, ttk
 
 import yaml
 
+from neko2020.application.animation_service import MAX_FPS, MIN_FPS
 from neko2020.application.ports import IConfigProvider
 from neko2020.infrastructure import files
 
@@ -48,7 +49,10 @@ _SECTIONS: list[tuple[str, str, list[tuple[str, str, type]]]] = [
     ),
     (
         "Performance",
-        "Lower FPS reduces CPU usage; higher makes motion smoother.",
+        "Lower FPS reduces CPU usage; higher makes motion smoother.\n"
+        f"Capped to {MIN_FPS}-{MAX_FPS}: since each animation only "
+        "alternates between 2 frames, going much higher turns the pet "
+        "into a rapid strobe.",
         [("fps", "FPS", int)],
     ),
 ]
@@ -174,6 +178,15 @@ class ConfigDialog:
                     combo.grid(
                         row=i, column=1, sticky="w", pady=2, padx=(8, 0)
                     )
+                elif path == "fps":
+                    spin = ttk.Spinbox(
+                        tab,
+                        textvariable=var,
+                        from_=MIN_FPS,
+                        to=MAX_FPS,
+                        width=8,
+                    )
+                    spin.grid(row=i, column=1, sticky="w", pady=2, padx=(8, 0))
                 else:
                     tk.Entry(tab, textvariable=var, width=10).grid(
                         row=i, column=1, sticky="w", pady=2, padx=(8, 0)
@@ -208,6 +221,14 @@ class ConfigDialog:
                     messagebox.showerror(
                         "Invalid value",
                         f"'{label}' must be an integer.",
+                        parent=self._win,
+                    )
+                    return None
+                if path == "fps" and not (MIN_FPS <= val <= MAX_FPS):
+                    messagebox.showerror(
+                        "Invalid value",
+                        f"'{label}' must be between {MIN_FPS} and "
+                        f"{MAX_FPS} to avoid rapid flickering.",
                         parent=self._win,
                     )
                     return None

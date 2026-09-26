@@ -13,6 +13,12 @@ from neko2020.domain.value_objects import Point, Rect
 SessionFactory = Callable[[], tuple[NekoStateMachine, IRenderer]]
 Scheduler = Callable[[int, Callable[[], None]], None]
 
+# Sprite animation only has 2 alternating frames per state, so ticking
+# much faster than this turns the pet into a rapid strobe. Clamp defends
+# against that even if config.yml was hand-edited outside the UI.
+MIN_FPS = 1
+MAX_FPS = 30
+
 
 class AnimationService:
     def __init__(
@@ -35,7 +41,8 @@ class AnimationService:
         self._stopped_event.set()
 
     def _delay_ms(self) -> int:
-        return 1000 // self._config.get_int("fps")
+        fps = max(MIN_FPS, min(MAX_FPS, self._config.get_int("fps")))
+        return 1000 // fps
 
     def _monitor_for(self, cursor: Point) -> Rect:
         for m in self._monitors:
