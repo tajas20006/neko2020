@@ -87,6 +87,32 @@ def _set_nested(d: dict, path: str, value) -> None:
     d[keys[-1]] = value
 
 
+def _parse_int_field(
+    raw: str,
+    label: str,
+    min_val: int | None = None,
+    max_val: int | None = None,
+    range_hint: str = "",
+) -> tuple[int | None, str | None]:
+    """Parse `raw` as an int for `label`, applying an optional range.
+
+    Returns (value, None) on success, or (None, error_message) on failure.
+    Pure logic, kept free of Tkinter so it's unit-testable headlessly.
+    """
+    try:
+        value = int(raw)
+    except ValueError:
+        return None, f"'{label}' must be an integer."
+    if (min_val is not None and value < min_val) or (
+        max_val is not None and value > max_val
+    ):
+        return (
+            None,
+            f"'{label}' must be between {min_val} and {max_val}{range_hint}.",
+        )
+    return value, None
+
+
 def _write_config(user_path: str, data: dict) -> None:
     os.makedirs(os.path.dirname(user_path), exist_ok=True)
     if os.path.exists(user_path):
@@ -215,21 +241,19 @@ class ConfigDialog:
         for path, label, typ in _all_fields():
             raw = self._vars[path].get().strip()
             if typ is int:
-                try:
-                    val: int | str = int(raw)
-                except ValueError:
-                    messagebox.showerror(
-                        "Invalid value",
-                        f"'{label}' must be an integer.",
-                        parent=self._win,
+                if path == "fps":
+                    val, error = _parse_int_field(
+                        raw,
+                        label,
+                        MIN_FPS,
+                        MAX_FPS,
+                        " to avoid rapid flickering",
                     )
-                    return None
-                if path == "fps" and not (MIN_FPS <= val <= MAX_FPS):
+                else:
+                    val, error = _parse_int_field(raw, label)
+                if error is not None:
                     messagebox.showerror(
-                        "Invalid value",
-                        f"'{label}' must be between {MIN_FPS} and "
-                        f"{MAX_FPS} to avoid rapid flickering.",
-                        parent=self._win,
+                        "Invalid value", error, parent=self._win
                     )
                     return None
             else:
