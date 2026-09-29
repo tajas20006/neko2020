@@ -12,6 +12,7 @@ duration:
   awake: 3
   claw: 10
   awake_rand: 20
+  walk_frame_hold: 1
 idle_space: 10
 animal: neko
 fps: 4
