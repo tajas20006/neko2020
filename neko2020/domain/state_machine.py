@@ -36,6 +36,20 @@ class State(Enum):
         return f"{self.__class__.__name__}.{self.name}"
 
 
+_MOVE_STATES = frozenset(
+    {
+        State.U_MOVE,
+        State.D_MOVE,
+        State.L_MOVE,
+        State.R_MOVE,
+        State.UL_MOVE,
+        State.UR_MOVE,
+        State.DL_MOVE,
+        State.DR_MOVE,
+    }
+)
+
+
 @dataclass(frozen=True)
 class TickResult:
     frame_index: int
@@ -58,6 +72,7 @@ class NekoStateMachine:
         max_speed: int,
         idle_space: int,
         offset: Point,
+        walk_frame_hold: int,
     ):
         self.STOP_TIME = stop_time
         self.WASH_TIME = wash_time
@@ -66,6 +81,7 @@ class NekoStateMachine:
         self.AWAKE_TIME = awake_time
         self.CLAW_TIME = claw_time
         self.AWK_RND = awake_rand
+        self.walk_frame_hold = max(1, walk_frame_hold)
 
         self.animation = {
             State.STOP: [28, 28, 28, 28],
@@ -102,6 +118,7 @@ class NekoStateMachine:
         self.action_count = 0
         self.tick_count = 0
         self.state_count = 0
+        self.walk_tick = 0
         self.state = State.STOP
 
     def _move_start(self):
@@ -148,11 +165,17 @@ class NekoStateMachine:
             return
         self.tick_count = 0
         self.state_count = 0
+        self.walk_tick = 0
         self.state = state
         return self.state
 
     def _frame_index(self):
-        return self.animation[self.state][self.tick_count]
+        pattern = self.animation[self.state]
+        if self.state in _MOVE_STATES:
+            index = (self.walk_tick // self.walk_frame_hold) % len(pattern)
+        else:
+            index = self.tick_count
+        return pattern[index]
 
     def tick(
         self,
@@ -200,6 +223,7 @@ class NekoStateMachine:
         self.tick_count = (self.tick_count + 1) % 4
         if self.tick_count % 2 == 0:
             self.state_count += 1
+        self.walk_tick += 1
 
         result_x = position.x
         result_y = position.y
@@ -243,16 +267,7 @@ class NekoStateMachine:
                 random.random() * self.AWK_RND
             ):
                 self._calc_direction()
-        elif self.state in {
-            State.U_MOVE,
-            State.D_MOVE,
-            State.L_MOVE,
-            State.R_MOVE,
-            State.UL_MOVE,
-            State.UR_MOVE,
-            State.DL_MOVE,
-            State.DR_MOVE,
-        }:
+        elif self.state in _MOVE_STATES:
             x = position.x
             y = position.y
             new_x = x + self.dx

@@ -6,6 +6,7 @@ from tkinter import messagebox, ttk
 
 import yaml
 
+from neko2020.application.animation_service import MIN_FPS
 from neko2020.application.ports import IConfigProvider
 from neko2020.infrastructure import files
 
@@ -16,40 +17,44 @@ _DESCRIPTION = (
     "A backup of your previous config is saved as config.yml.bak."
 )
 
-_SECTIONS: list[tuple[str, str, list[tuple[str, str, type]]]] = [
+_SECTIONS: list[tuple[str, str, list[tuple[str, str, type, int | None]]]] = [
     (
         "Appearance",
         "Which sprite set the pet uses.",
-        [("animal", "Animal", str)],
+        [("animal", "Animal", str, None)],
     ),
     (
         "Movement",
         "How the pet chases the cursor and where it sits relative to it.",
         [
-            ("speed.max", "Max Speed (px/frame)", int),
-            ("speed.min", "Min Speed (px/frame)", int),
-            ("offset.x", "Cursor Offset X (px)", int),
-            ("offset.y", "Cursor Offset Y (px)", int),
-            ("idle_space", "Idle Threshold (px)", int),
+            ("speed.max", "Max Speed (px/frame)", int, None),
+            ("speed.min", "Min Speed (px/frame)", int, None),
+            ("offset.x", "Cursor Offset X (px)", int, None),
+            ("offset.y", "Cursor Offset Y (px)", int, None),
+            ("idle_space", "Idle Threshold (px)", int, None),
         ],
     ),
     (
         "Behavior Timing",
-        "Number of animation frames spent in each idle action.",
+        "Number of animation frames spent in each idle action.\n"
+        "Walk Frame Hold is how many ticks each walking frame is held "
+        "before swapping to the next — raise it if fast motion makes "
+        "the legs look like they're strobing.",
         [
-            ("duration.stop", "Stop", int),
-            ("duration.wash", "Wash", int),
-            ("duration.scratch", "Scratch", int),
-            ("duration.yawn", "Yawn", int),
-            ("duration.awake", "Awake", int),
-            ("duration.claw", "Claw", int),
-            ("duration.awake_rand", "Awake Variance", int),
+            ("duration.stop", "Stop", int, None),
+            ("duration.wash", "Wash", int, None),
+            ("duration.scratch", "Scratch", int, None),
+            ("duration.yawn", "Yawn", int, None),
+            ("duration.awake", "Awake", int, None),
+            ("duration.claw", "Claw", int, None),
+            ("duration.awake_rand", "Awake Variance", int, None),
+            ("duration.walk_frame_hold", "Walk Frame Hold", int, 1),
         ],
     ),
     (
         "Performance",
         "Lower FPS reduces CPU usage; higher makes motion smoother.",
-        [("fps", "FPS", int)],
+        [("fps", "FPS", int, MIN_FPS)],
     ),
 ]
 
@@ -83,6 +88,35 @@ def _set_nested(d: dict, path: str, value) -> None:
     d[keys[-1]] = value
 
 
+def _parse_int_field(
+    raw: str, label: str, min_val: int | None = None
+) -> tuple[int | None, str | None]:
+    """Parse `raw` as an int for `label`, applying an optional minimum.
+
+    Returns (value, None) on success, or (None, error_message) on failure.
+    Pure logic, kept free of Tkinter so it's unit-testable headlessly.
+    """
+    try:
+        value = int(raw)
+    except ValueError:
+        return None, f"'{label}' must be an integer."
+    if min_val is not None and value < min_val:
+        return None, f"'{label}' must be at least {min_val}."
+    return value, None
+
+
+def _scale_durations(durations: dict, ratio: float) -> dict:
+    """Scale each duration value by `ratio`, rounding to an int >= 1.
+
+    Used to keep idle-timing and Walk Frame Hold feeling the same in
+    real time after the fps setting changes. Pure logic, kept free of
+    Tkinter so it's unit-testable headlessly.
+    """
+    return {
+        key: max(1, round(value * ratio)) for key, value in durations.items()
+    }
+
+
 def _write_config(user_path: str, data: dict) -> None:
     os.makedirs(os.path.dirname(user_path), exist_ok=True)
     if os.path.exists(user_path):
@@ -104,6 +138,7 @@ class ConfigDialog:
         self._user_path = user_path
         self._service = service
         self._win: tk.Toplevel | None = None
+        self._initial_fps: int | None = None
 
     def open(self) -> None:
         if self._win is not None:
@@ -115,6 +150,7 @@ class ConfigDialog:
                 self._win = None
 
         self._config.reload()
+        self._initial_fps = self._config.get_int("fps")
         animals = _get_animals()
 
         win = tk.Toplevel(self._parent)
@@ -156,7 +192,7 @@ class ConfigDialog:
                 font=("TkDefaultFont", 8),
             ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
-            for i, (path, label, _typ) in enumerate(fields, start=1):
+            for i, (path, label, _typ, _min_val) in enumerate(fields, start=1):
                 tk.Label(tab, text=label + ":", anchor="w", width=22).grid(
                     row=i, column=0, sticky="w", pady=2
                 )
@@ -199,16 +235,13 @@ class ConfigDialog:
 
     def _collect(self) -> dict | None:
         data: dict = {}
-        for path, label, typ in _all_fields():
+        for path, label, typ, min_val in _all_fields():
             raw = self._vars[path].get().strip()
             if typ is int:
-                try:
-                    val: int | str = int(raw)
-                except ValueError:
+                val, error = _parse_int_field(raw, label, min_val)
+                if error is not None:
                     messagebox.showerror(
-                        "Invalid value",
-                        f"'{label}' must be an integer.",
-                        parent=self._win,
+                        "Invalid value", error, parent=self._win
                     )
                     return None
             else:
@@ -220,9 +253,38 @@ class ConfigDialog:
         data = self._collect()
         if data is None:
             return False
+        self._maybe_scale_timing(data)
         _write_config(self._user_path, data)
         threading.Thread(target=self._service.restart, daemon=True).start()
+        self._initial_fps = data.get("fps", self._initial_fps)
         return True
+
+    def _maybe_scale_timing(self, data: dict) -> None:
+        new_fps = data.get("fps")
+        durations = data.get("duration")
+        if (
+            new_fps is None
+            or not durations
+            or not self._initial_fps
+            or new_fps == self._initial_fps
+        ):
+            return
+        ratio = new_fps / self._initial_fps
+        if not messagebox.askyesno(
+            "Scale timing settings?",
+            f"FPS changed from {self._initial_fps} to {new_fps} "
+            f"(×{ratio:.3g}).\n\n"
+            "Scale Walk Frame Hold and the idle timing settings by "
+            "the same factor to keep the same real-time speed?",
+            parent=self._win,
+        ):
+            return
+        scaled = _scale_durations(durations, ratio)
+        data["duration"] = scaled
+        for key, value in scaled.items():
+            var = self._vars.get(f"duration.{key}")
+            if var is not None:
+                var.set(str(value))
 
     def _save(self) -> None:
         if self._do_save():

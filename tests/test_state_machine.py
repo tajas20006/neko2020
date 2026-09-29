@@ -21,6 +21,7 @@ def make_sm(**overrides):
         max_speed=60,
         idle_space=10,
         offset=Point(0, 0),
+        walk_frame_hold=1,
     )
     defaults.update(overrides)
     return NekoStateMachine(**defaults)
@@ -316,3 +317,38 @@ def test_frame_index_for_stop_state_is_constant():
     # cursor at (0,0) stays in STOP (no cursor jump from initial to_x=0)
     result = sm.tick(Point(0, 0), CENTER, SIZE, BOUNDS)
     assert result.frame_index == 28  # animation[STOP] = [28, 28, 28, 28]
+
+
+# ---------------------------------------------------------------------------
+# walk_frame_hold: how many ticks each walk-cycle frame is held
+# ---------------------------------------------------------------------------
+
+
+def test_walk_frame_hold_holds_each_frame_for_n_ticks():
+    sm = make_sm(awake_time=1, awake_rand=0, walk_frame_hold=2)
+    tick_n(sm, 3, Point(1100, 540))  # → R_MOVE, walk_tick=0
+    r1 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)  # walk_tick=1
+    r2 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)  # walk_tick=2
+    r3 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)  # walk_tick=3
+    assert r1.frame_index == 5  # animation[R_MOVE][0], still held
+    assert r2.frame_index == 6  # animation[R_MOVE][1], advanced
+    assert r3.frame_index == 6  # held again
+
+
+def test_walk_frame_hold_of_one_matches_default_behavior():
+    sm = make_sm(awake_time=1, awake_rand=0, walk_frame_hold=1)
+    tick_n(sm, 3, Point(1100, 540))
+    r1 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)
+    r2 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)
+    assert r1.frame_index == 6
+    assert r2.frame_index == 5
+
+
+def test_walk_frame_hold_does_not_affect_non_move_states():
+    sm = make_sm(stop_time=2, walk_frame_hold=5)
+    cursor = Point(0, 0)
+    tick_n(sm, 4, cursor)
+    assert sm.state == State.WASH
+    r1 = sm.tick(cursor, CENTER, SIZE, BOUNDS)
+    r2 = sm.tick(cursor, CENTER, SIZE, BOUNDS)
+    assert r1.frame_index != r2.frame_index
