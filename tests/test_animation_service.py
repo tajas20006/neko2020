@@ -1,10 +1,6 @@
 from unittest.mock import MagicMock
 
-from neko2020.application.animation_service import (
-    MAX_FPS,
-    MIN_FPS,
-    AnimationService,
-)
+from neko2020.application.animation_service import MIN_FPS, AnimationService
 from neko2020.domain.value_objects import Point, Rect, Size
 
 MONITOR_A = Rect(0, 0, 1920, 1080)
@@ -143,9 +139,9 @@ def test_delay_ms_at_10fps():
     assert svc._delay_ms() == 100
 
 
-def test_delay_ms_clamps_fps_above_max():
+def test_delay_ms_at_60fps_is_unclamped():
     svc, *_ = _make_service(fps=60)
-    assert svc._delay_ms() == 1000 // MAX_FPS
+    assert svc._delay_ms() == 1000 // 60
 
 
 def test_delay_ms_clamps_fps_below_min():

@@ -6,7 +6,7 @@ from tkinter import messagebox, ttk
 
 import yaml
 
-from neko2020.application.animation_service import MAX_FPS, MIN_FPS
+from neko2020.application.animation_service import MIN_FPS
 from neko2020.application.ports import IConfigProvider
 from neko2020.infrastructure import files
 
@@ -17,43 +17,44 @@ _DESCRIPTION = (
     "A backup of your previous config is saved as config.yml.bak."
 )
 
-_SECTIONS: list[tuple[str, str, list[tuple[str, str, type]]]] = [
+_SECTIONS: list[tuple[str, str, list[tuple[str, str, type, int | None]]]] = [
     (
         "Appearance",
         "Which sprite set the pet uses.",
-        [("animal", "Animal", str)],
+        [("animal", "Animal", str, None)],
     ),
     (
         "Movement",
         "How the pet chases the cursor and where it sits relative to it.",
         [
-            ("speed.max", "Max Speed (px/frame)", int),
-            ("speed.min", "Min Speed (px/frame)", int),
-            ("offset.x", "Cursor Offset X (px)", int),
-            ("offset.y", "Cursor Offset Y (px)", int),
-            ("idle_space", "Idle Threshold (px)", int),
+            ("speed.max", "Max Speed (px/frame)", int, None),
+            ("speed.min", "Min Speed (px/frame)", int, None),
+            ("offset.x", "Cursor Offset X (px)", int, None),
+            ("offset.y", "Cursor Offset Y (px)", int, None),
+            ("idle_space", "Idle Threshold (px)", int, None),
         ],
     ),
     (
         "Behavior Timing",
-        "Number of animation frames spent in each idle action.",
+        "Number of animation frames spent in each idle action.\n"
+        "Walk Frame Hold is how many ticks each walking frame is held "
+        "before swapping to the next — raise it if fast motion makes "
+        "the legs look like they're strobing.",
         [
-            ("duration.stop", "Stop", int),
-            ("duration.wash", "Wash", int),
-            ("duration.scratch", "Scratch", int),
-            ("duration.yawn", "Yawn", int),
-            ("duration.awake", "Awake", int),
-            ("duration.claw", "Claw", int),
-            ("duration.awake_rand", "Awake Variance", int),
+            ("duration.stop", "Stop", int, None),
+            ("duration.wash", "Wash", int, None),
+            ("duration.scratch", "Scratch", int, None),
+            ("duration.yawn", "Yawn", int, None),
+            ("duration.awake", "Awake", int, None),
+            ("duration.claw", "Claw", int, None),
+            ("duration.awake_rand", "Awake Variance", int, None),
+            ("duration.walk_frame_hold", "Walk Frame Hold", int, 1),
         ],
     ),
     (
         "Performance",
-        "Lower FPS reduces CPU usage; higher makes motion smoother.\n"
-        f"Capped to {MIN_FPS}-{MAX_FPS}: since each animation only "
-        "alternates between 2 frames, going much higher turns the pet "
-        "into a rapid strobe.",
-        [("fps", "FPS", int)],
+        "Lower FPS reduces CPU usage; higher makes motion smoother.",
+        [("fps", "FPS", int, MIN_FPS)],
     ),
 ]
 
@@ -88,13 +89,9 @@ def _set_nested(d: dict, path: str, value) -> None:
 
 
 def _parse_int_field(
-    raw: str,
-    label: str,
-    min_val: int | None = None,
-    max_val: int | None = None,
-    range_hint: str = "",
+    raw: str, label: str, min_val: int | None = None
 ) -> tuple[int | None, str | None]:
-    """Parse `raw` as an int for `label`, applying an optional range.
+    """Parse `raw` as an int for `label`, applying an optional minimum.
 
     Returns (value, None) on success, or (None, error_message) on failure.
     Pure logic, kept free of Tkinter so it's unit-testable headlessly.
@@ -103,13 +100,8 @@ def _parse_int_field(
         value = int(raw)
     except ValueError:
         return None, f"'{label}' must be an integer."
-    if (min_val is not None and value < min_val) or (
-        max_val is not None and value > max_val
-    ):
-        return (
-            None,
-            f"'{label}' must be between {min_val} and {max_val}{range_hint}.",
-        )
+    if min_val is not None and value < min_val:
+        return None, f"'{label}' must be at least {min_val}."
     return value, None
 
 
@@ -186,7 +178,7 @@ class ConfigDialog:
                 font=("TkDefaultFont", 8),
             ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
-            for i, (path, label, _typ) in enumerate(fields, start=1):
+            for i, (path, label, _typ, _min_val) in enumerate(fields, start=1):
                 tk.Label(tab, text=label + ":", anchor="w", width=22).grid(
                     row=i, column=0, sticky="w", pady=2
                 )
@@ -204,15 +196,6 @@ class ConfigDialog:
                     combo.grid(
                         row=i, column=1, sticky="w", pady=2, padx=(8, 0)
                     )
-                elif path == "fps":
-                    spin = ttk.Spinbox(
-                        tab,
-                        textvariable=var,
-                        from_=MIN_FPS,
-                        to=MAX_FPS,
-                        width=8,
-                    )
-                    spin.grid(row=i, column=1, sticky="w", pady=2, padx=(8, 0))
                 else:
                     tk.Entry(tab, textvariable=var, width=10).grid(
                         row=i, column=1, sticky="w", pady=2, padx=(8, 0)
@@ -238,19 +221,10 @@ class ConfigDialog:
 
     def _collect(self) -> dict | None:
         data: dict = {}
-        for path, label, typ in _all_fields():
+        for path, label, typ, min_val in _all_fields():
             raw = self._vars[path].get().strip()
             if typ is int:
-                if path == "fps":
-                    val, error = _parse_int_field(
-                        raw,
-                        label,
-                        MIN_FPS,
-                        MAX_FPS,
-                        " to avoid rapid flickering",
-                    )
-                else:
-                    val, error = _parse_int_field(raw, label)
+                val, error = _parse_int_field(raw, label, min_val)
                 if error is not None:
                     messagebox.showerror(
                         "Invalid value", error, parent=self._win
