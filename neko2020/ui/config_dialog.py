@@ -105,6 +105,18 @@ def _parse_int_field(
     return value, None
 
 
+def _scale_durations(durations: dict, ratio: float) -> dict:
+    """Scale each duration value by `ratio`, rounding to an int >= 1.
+
+    Used to keep idle-timing and Walk Frame Hold feeling the same in
+    real time after the fps setting changes. Pure logic, kept free of
+    Tkinter so it's unit-testable headlessly.
+    """
+    return {
+        key: max(1, round(value * ratio)) for key, value in durations.items()
+    }
+
+
 def _write_config(user_path: str, data: dict) -> None:
     os.makedirs(os.path.dirname(user_path), exist_ok=True)
     if os.path.exists(user_path):
@@ -126,6 +138,7 @@ class ConfigDialog:
         self._user_path = user_path
         self._service = service
         self._win: tk.Toplevel | None = None
+        self._initial_fps: int | None = None
 
     def open(self) -> None:
         if self._win is not None:
@@ -137,6 +150,7 @@ class ConfigDialog:
                 self._win = None
 
         self._config.reload()
+        self._initial_fps = self._config.get_int("fps")
         animals = _get_animals()
 
         win = tk.Toplevel(self._parent)
@@ -239,9 +253,38 @@ class ConfigDialog:
         data = self._collect()
         if data is None:
             return False
+        self._maybe_scale_timing(data)
         _write_config(self._user_path, data)
         threading.Thread(target=self._service.restart, daemon=True).start()
+        self._initial_fps = data.get("fps", self._initial_fps)
         return True
+
+    def _maybe_scale_timing(self, data: dict) -> None:
+        new_fps = data.get("fps")
+        durations = data.get("duration")
+        if (
+            new_fps is None
+            or not durations
+            or not self._initial_fps
+            or new_fps == self._initial_fps
+        ):
+            return
+        ratio = new_fps / self._initial_fps
+        if not messagebox.askyesno(
+            "Scale timing settings?",
+            f"FPS changed from {self._initial_fps} to {new_fps} "
+            f"(×{ratio:.3g}).\n\n"
+            "Scale Walk Frame Hold and the idle timing settings by "
+            "the same factor to keep the same real-time speed?",
+            parent=self._win,
+        ):
+            return
+        scaled = _scale_durations(durations, ratio)
+        data["duration"] = scaled
+        for key, value in scaled.items():
+            var = self._vars.get(f"duration.{key}")
+            if var is not None:
+                var.set(str(value))
 
     def _save(self) -> None:
         if self._do_save():
