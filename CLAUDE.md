@@ -19,7 +19,7 @@ uv run python -m neko2020
 uv run pytest
 
 # Run a single test
-uv run pytest tests/test_neko2020.py::test_version
+uv run pytest tests/test_state_machine.py::test_full_idle_sequence
 
 # Build standalone executable
 uv run pyinstaller neko2020.spec   # output: dist/neko2020.exe
@@ -34,32 +34,49 @@ uv run pre-commit install
 
 ## Architecture
 
-The application is a Windows-only transparent fullscreen overlay. Understanding how it achieves transparency and click-through is essential before touching `__main__.py`:
+The application is a Windows-only transparent fullscreen overlay organized in clean-architecture layers. Understanding how it achieves transparency and click-through is essential before touching `__main__.py`:
 
 - Tkinter window is set to `'-transparentcolor green'` (the green background becomes invisible)
-- `ctypes.windll.user32.SetWindowLong` applies `WS_EX_TRANSPARENT | WS_EX_LAYERED` so mouse events pass through to the desktop
-- `WS_EX_TOOLWINDOW` hides the window from Alt+Tab
+- `root.wm_attributes("-disabled", True)` plus Win32 styles make mouse events pass through to the desktop
+- `WS_EX_TOOLWINDOW` (applied via ctypes) hides the window from Alt+Tab
+- The window spans the virtual screen across all monitors; `EnumDisplayMonitors` provides per-display bounds and `SetWindowPos` positions the window (Tk `geometry()` can't express negative coordinates)
 
-The animation loop runs on Tkinter's `after()` scheduler (not a separate thread). Each tick calls `Neko.tick(cursor)` then `Pet.update(state, frame, x, y)`.
+The animation loop runs on Tkinter's `after()` scheduler (not a separate thread). The system tray icon (`pystray`) runs detached on its own thread.
 
-**Core flow:**
+**Layers** (dependencies point inward only):
 
 ```
-__main__.py  →  Neko.tick()  →  returns (state, frame_name, x, y)
-             →  Pet.update()  →  swaps PhotoImage on canvas
+domain/         # Pure logic, no I/O: state_machine.py, value_objects.py
+application/    # Orchestration: animation_service.py, ports.py (ABCs)
+adapters/       # Port implementations: tkinter_renderer.py,
+                #   tkinter_cursor.py, yaml_config.py
+infrastructure/ # Filesystem/resources: files.py, image_loader.py
+ui/             # config_dialog.py (tray-opened settings GUI)
+__main__.py     # Composition root: window setup, wiring, tray menu
 ```
 
-`Neko` (`neko.py`) owns all behavior logic: an 18-state machine (`STOP`, `WASH`, `SCRATCH`, `YAWN`, `SLEEP`, `AWAKE`, 8 directional moves, 4 claw states). Direction to the cursor is computed by dividing the circle into 8 sectors with `math.sin(math.pi / 8)`. Frame names are hard-coded lists per state; the names must exactly match filenames under `resource/<animal>/`.
+**Core flow per frame:**
 
-`Pet` (`pet.py`) is purely visual: it loads 32 `.ico` sprites via Pillow, caches `ImageTk.PhotoImage` objects, and moves/swaps a single canvas item each frame.
+```
+AnimationService._tick()
+  → NekoStateMachine.tick(cursor, position, size, bounds)
+      returns TickResult(frame_index, x, y)
+  → TkinterRenderer.render(frame_index, x, y)
+      swaps PhotoImage on the canvas
+  → scheduler re-arms root.after(1000 // fps, ...)
+```
+
+`NekoStateMachine` (`domain/state_machine.py`) owns all behavior logic: an 18-state machine (`STOP`, `WASH`, `SCRATCH`, `YAWN`, `SLEEP`, `AWAKE`, 8 directional moves, 4 claw states) as a `State` enum. Direction to the cursor is computed by dividing the circle into 8 sectors with `math.sin(math.pi / 8)`. Each state maps to a 4-element list of integer frame indices; the indices point into the ordered 32-icon list hard-coded in `infrastructure/image_loader.py`, whose names must exactly match filenames under `resource/<animal>/`.
+
+`TkinterRenderer` (`adapters/tkinter_renderer.py`) is purely visual: it loads the 32 `.ico` sprites via Pillow, keeps `ImageTk.PhotoImage` objects, and redraws a single canvas item when the frame or position changes.
 
 ## Configuration
 
-User config at `~/.config/neko2020/config.yml` deep-merges over `config/default_config.yml`. Key values: `speed.max`, `speed.min`, `fps` (ms between frames), `animal` (subdirectory name under `resource/`, or `"random"`), timing values under `time.*`.
+User config at `~/.config/neko2020/config.yml` (respects `XDG_CONFIG_HOME`) deep-merges over `config/default_config.yml`. Key values: `speed.max`, `speed.min`, `fps` (frames per second; tick delay is `1000 // fps` ms), `animal` (subdirectory name under `resource/`, or `"random"`), timing values under `duration.*`, `offset.x`/`offset.y`, `idle_space`. Users normally edit settings through the tray's **Config** dialog (`ui/config_dialog.py`), which writes the user config and restarts the animation.
 
 ## Adding a New Animal
 
-Create `resource/<name>/` with all 32 `.ico` files. File names must exactly match the hard-coded list in `neko2020/utils/images.py`. Set `animal: <name>` in user config or use `"random"` to include it in random rotation.
+Create `resource/<name>/` (or `~/.config/neko2020/resources/<name>/` for user-local sets) with all 32 `.ico` files. File names must exactly match the hard-coded list in `neko2020/infrastructure/image_loader.py`. Set `animal: <name>` in user config or use `"random"` to include it in random rotation. Scripts under `tools/` can generate sprite sets with AI (see `tools/README.md`).
 
 ## Code Style
 

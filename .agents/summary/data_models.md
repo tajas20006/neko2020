@@ -5,17 +5,20 @@ description: Data structures used across the application
 
 # Data Models
 
-## Geometric Types (`utils/classes.py`)
+## Geometric Types (`domain/value_objects.py`)
+
+Frozen dataclasses:
 
 ```python
-Point(x: int, y: int)       # cursor or pet position
-Size(cx: int, cy: int)      # screen or sprite dimensions
-Rect(left, top, right, bottom)  # boundary rectangle
+Point(x: int, y: int)           # cursor or pet position
+Size(cx: int, cy: int)          # sprite dimensions
+Rect(left, top, right, bottom)  # monitor / virtual-screen bounds
+                                #   (.width / .height properties)
 ```
 
-## Animation State
+## Animation State (`domain/state_machine.py`)
 
-States are plain string constants defined at the top of `neko.py`:
+`State` is an `Enum` with 18 members:
 
 ```
 STOP  WASH  SCRATCH  YAWN  SLEEP  AWAKE
@@ -24,36 +27,49 @@ UL_MOVE  UR_MOVE  DL_MOVE  DR_MOVE
 U_CLAW  D_CLAW  L_CLAW  R_CLAW
 ```
 
+## Tick Result
+
+```python
+@dataclass(frozen=True)
+class TickResult:
+    frame_index: int   # index into the 32-icon list
+    x: int             # new pet center (screen coords)
+    y: int
+```
+
 ## Frame Map
 
-A dict in `neko.py` mapping each state string to a list of 2–4 icon name strings (the animation cycle). Example:
+`NekoStateMachine.animation` maps each `State` to a 4-element list of integer frame indices, cycled by `tick_count`. Example:
 
 ```python
 {
-    "R_MOVE": ["neko2R_1", "neko2R_2"],
-    "STOP":   ["stop"],
-    "WASH":   ["wash1", "wash2"],
+    State.STOP:   [28, 28, 28, 28],
+    State.R_MOVE: [5, 6, 5, 6],
+    State.SLEEP:  [30, 30, 31, 31],
     ...
 }
 ```
 
-Icon names correspond directly to filenames under `resource/<animal>/`.
+Indices refer to the ordered icon-name list in `infrastructure/image_loader.py` (`"Awake"`, `"up1"`, …, `"sleep2"` — 32 names). Names correspond directly to `.ico` filenames under `resource/<animal>/`.
 
 ## Configuration Dict
 
-After loading and deep-merging YAMLs, the config is a nested dict:
+After loading and deep-merging YAMLs (`adapters/yaml_config.py`, BaseLoader — all scalars are strings until a typed accessor converts them):
 
 ```python
 {
     "speed": {"max": 60, "min": 2},
-    "offset": {"x": 0, "y": -50},
-    "time": {"stop": 4, "wash": 10, ...},
+    "offset": {"x": 0, "y": -35},
+    "duration": {"stop": 4, "wash": 10, "scratch": 4, "yawn": 3,
+                 "awake": 3, "claw": 10, "awake_rand": 20},
     "idle_space": 10,
     "animal": "neko",
-    "fps": 300
+    "fps": 4,
 }
 ```
 
-## Image Cache
+`fps` is frames per second — the tick delay is `1000 // fps` ms.
 
-`Pet` maintains a dict `{icon_name: ImageTk.PhotoImage}` to avoid re-loading `.ico` files on every frame update.
+## Image List
+
+`TkinterRenderer` holds the ordered `list[ImageTk.PhotoImage]` returned by `load_images()`; `TickResult.frame_index` indexes into it. Images are loaded once per session (start/restart), not per frame.
