@@ -4,7 +4,7 @@ from neko2020.application.animation_service import MIN_FPS
 from neko2020.ui.config_dialog import (
     ConfigDialog,
     _parse_int_field,
-    _scale_durations,
+    _scale_for_fps,
     _set_nested,
 )
 
@@ -45,23 +45,22 @@ def test_parse_int_field_high_value_with_no_max_is_valid():
 
 
 # ---------------------------------------------------------------------------
-# _scale_durations
+# _scale_for_fps
 # ---------------------------------------------------------------------------
 
 
-def test_scale_durations_multiplies_by_ratio():
-    result = _scale_durations({"walk_frame_hold": 1, "stop": 4}, 3.0)
-    assert result == {"walk_frame_hold": 3, "stop": 12}
+def test_scale_for_fps_scales_hold_up_and_speeds_down_together():
+    data = {"frame_hold": 1, "speed": {"max": 60, "min": 6}}
+    _scale_for_fps(data, 3.0)
+    assert data == {"frame_hold": 3, "speed": {"max": 20, "min": 2}}
 
 
-def test_scale_durations_rounds_to_nearest_int():
-    result = _scale_durations({"stop": 5}, 1.5)
-    assert result == {"stop": 8}  # round(7.5) == 8 (banker's rounding)
-
-
-def test_scale_durations_floors_at_one():
-    result = _scale_durations({"walk_frame_hold": 3}, 0.1)
-    assert result == {"walk_frame_hold": 1}
+def test_scale_for_fps_floors_at_one():
+    data = {"frame_hold": 3, "speed": {"max": 2, "min": 1}}
+    _scale_for_fps(data, 10.0)
+    assert data == {"frame_hold": 30, "speed": {"max": 1, "min": 1}}
+    _scale_for_fps(data, 0.01)
+    assert data["frame_hold"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -120,8 +119,8 @@ def _make_dialog_with_vars(overrides: dict[str, str], initial_fps=4):
         "duration.awake": "3",
         "duration.claw": "10",
         "duration.awake_rand": "20",
-        "duration.walk_frame_hold": "1",
         "fps": "4",
+        "frame_hold": "1",
     }
     defaults.update(overrides)
     dialog._vars = {k: _FakeVar(v) for k, v in defaults.items()}
@@ -135,7 +134,7 @@ def test_collect_returns_data_for_valid_values():
     assert data["fps"] == 4
     assert data["speed"]["max"] == 60
     assert data["animal"] == "neko"
-    assert data["duration"]["walk_frame_hold"] == 1
+    assert data["frame_hold"] == 1
 
 
 def test_collect_allows_high_fps_with_no_upper_bound():
@@ -157,8 +156,8 @@ def test_collect_returns_none_for_fps_below_min(monkeypatch):
     assert "must be at least" in shown["msg"]
 
 
-def test_collect_returns_none_for_walk_frame_hold_below_min(monkeypatch):
-    dialog = _make_dialog_with_vars({"duration.walk_frame_hold": "0"})
+def test_collect_returns_none_for_frame_hold_below_min(monkeypatch):
+    dialog = _make_dialog_with_vars({"frame_hold": "0"})
     shown = {}
     monkeypatch.setattr(
         "neko2020.ui.config_dialog.messagebox.showerror",
@@ -193,10 +192,12 @@ def test_maybe_scale_timing_scales_when_user_confirms(monkeypatch):
         lambda *a, **kw: True,
     )
     data = dialog._collect()
-    dialog._maybe_scale_timing(data)
-    assert data["duration"]["walk_frame_hold"] == 3
-    assert data["duration"]["stop"] == 12
-    assert dialog._vars["duration.walk_frame_hold"].get() == "3"
+    dialog._maybe_scale_for_fps(data)
+    assert data["frame_hold"] == 3
+    assert data["speed"] == {"max": 20, "min": 1}
+    assert data["duration"]["stop"] == 4
+    assert dialog._vars["frame_hold"].get() == "3"
+    assert dialog._vars["speed.max"].get() == "20"
 
 
 def test_maybe_scale_timing_leaves_data_when_user_declines(monkeypatch):
@@ -206,9 +207,9 @@ def test_maybe_scale_timing_leaves_data_when_user_declines(monkeypatch):
         lambda *a, **kw: False,
     )
     data = dialog._collect()
-    dialog._maybe_scale_timing(data)
-    assert data["duration"]["walk_frame_hold"] == 1
-    assert data["duration"]["stop"] == 4
+    dialog._maybe_scale_for_fps(data)
+    assert data["frame_hold"] == 1
+    assert data["speed"]["max"] == 60
 
 
 def test_maybe_scale_timing_skips_prompt_when_fps_unchanged(monkeypatch):
@@ -219,7 +220,7 @@ def test_maybe_scale_timing_skips_prompt_when_fps_unchanged(monkeypatch):
         lambda *a, **kw: asked.append(True) or True,
     )
     data = dialog._collect()
-    dialog._maybe_scale_timing(data)
+    dialog._maybe_scale_for_fps(data)
     assert asked == []
     assert data["duration"]["stop"] == 4
 
@@ -232,7 +233,7 @@ def test_maybe_scale_timing_skips_prompt_when_no_initial_fps(monkeypatch):
         lambda *a, **kw: asked.append(True) or True,
     )
     data = dialog._collect()
-    dialog._maybe_scale_timing(data)
+    dialog._maybe_scale_for_fps(data)
     assert asked == []
 
 

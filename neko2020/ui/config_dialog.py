@@ -36,10 +36,8 @@ _SECTIONS: list[tuple[str, str, list[tuple[str, str, type, int | None]]]] = [
     ),
     (
         "Behavior Timing",
-        "Number of animation frames spent in each idle action.\n"
-        "Walk Frame Hold is how many ticks each walking frame is held "
-        "before swapping to the next — raise it if fast motion makes "
-        "the legs look like they're strobing.",
+        "Number of sprite swaps spent in each idle action. Independent "
+        "of FPS and Frame Hold.",
         [
             ("duration.stop", "Stop", int, None),
             ("duration.wash", "Wash", int, None),
@@ -48,13 +46,17 @@ _SECTIONS: list[tuple[str, str, list[tuple[str, str, type, int | None]]]] = [
             ("duration.awake", "Awake", int, None),
             ("duration.claw", "Claw", int, None),
             ("duration.awake_rand", "Awake Variance", int, None),
-            ("duration.walk_frame_hold", "Walk Frame Hold", int, 1),
         ],
     ),
     (
         "Performance",
-        "Lower FPS reduces CPU usage; higher makes motion smoother.",
-        [("fps", "FPS", int, MIN_FPS)],
+        "Lower FPS reduces CPU usage; higher makes motion smoother.\n"
+        "Frame Hold is how many ticks pass before the sprite image "
+        "swaps — raise it if a high FPS makes the pet flicker.",
+        [
+            ("fps", "FPS", int, MIN_FPS),
+            ("frame_hold", "Frame Hold (ticks)", int, 1),
+        ],
     ),
 ]
 
@@ -105,16 +107,17 @@ def _parse_int_field(
     return value, None
 
 
-def _scale_durations(durations: dict, ratio: float) -> dict:
-    """Scale each duration value by `ratio`, rounding to an int >= 1.
+def _scale_for_fps(data: dict, ratio: float) -> None:
+    """Rescale `data` in place after the fps changes by `ratio`.
 
-    Used to keep idle-timing and Walk Frame Hold feeling the same in
-    real time after the fps setting changes. Pure logic, kept free of
-    Tkinter so it's unit-testable headlessly.
+    Frame Hold grows with fps and Max/Min Speed (px per tick) shrink, so
+    the sprite swap rate and the on-screen speed stay the same in real
+    time. Pure logic, kept free of Tkinter so it's unit-testable
+    headlessly.
     """
-    return {
-        key: max(1, round(value * ratio)) for key, value in durations.items()
-    }
+    data["frame_hold"] = max(1, round(data["frame_hold"] * ratio))
+    for key in ("max", "min"):
+        data["speed"][key] = max(1, round(data["speed"][key] / ratio))
 
 
 def _write_config(user_path: str, data: dict) -> None:
@@ -253,38 +256,37 @@ class ConfigDialog:
         data = self._collect()
         if data is None:
             return False
-        self._maybe_scale_timing(data)
+        self._maybe_scale_for_fps(data)
         _write_config(self._user_path, data)
         threading.Thread(target=self._service.restart, daemon=True).start()
         self._initial_fps = data.get("fps", self._initial_fps)
         return True
 
-    def _maybe_scale_timing(self, data: dict) -> None:
+    def _maybe_scale_for_fps(self, data: dict) -> None:
         new_fps = data.get("fps")
-        durations = data.get("duration")
         if (
             new_fps is None
-            or not durations
             or not self._initial_fps
             or new_fps == self._initial_fps
         ):
             return
         ratio = new_fps / self._initial_fps
         if not messagebox.askyesno(
-            "Scale timing settings?",
+            "Scale settings?",
             f"FPS changed from {self._initial_fps} to {new_fps} "
             f"(×{ratio:.3g}).\n\n"
-            "Scale Walk Frame Hold and the idle timing settings by "
-            "the same factor to keep the same real-time speed?",
+            "Scale Frame Hold up and Max/Min Speed down by the same "
+            "factor to keep the same real-time look and speed?",
             parent=self._win,
         ):
             return
-        scaled = _scale_durations(durations, ratio)
-        data["duration"] = scaled
-        for key, value in scaled.items():
-            var = self._vars.get(f"duration.{key}")
-            if var is not None:
-                var.set(str(value))
+        _scale_for_fps(data, ratio)
+        for path, value in (
+            ("frame_hold", data["frame_hold"]),
+            ("speed.max", data["speed"]["max"]),
+            ("speed.min", data["speed"]["min"]),
+        ):
+            self._vars[path].set(str(value))
 
     def _save(self) -> None:
         if self._do_save():
