@@ -72,7 +72,7 @@ class NekoStateMachine:
         max_speed: int,
         idle_space: int,
         offset: Point,
-        walk_frame_hold: int,
+        frame_hold: int,
     ):
         self.STOP_TIME = stop_time
         self.WASH_TIME = wash_time
@@ -81,7 +81,7 @@ class NekoStateMachine:
         self.AWAKE_TIME = awake_time
         self.CLAW_TIME = claw_time
         self.AWK_RND = awake_rand
-        self.walk_frame_hold = max(1, walk_frame_hold)
+        self.frame_hold = max(1, frame_hold)
 
         self.animation = {
             State.STOP: [28, 28, 28, 28],
@@ -118,7 +118,7 @@ class NekoStateMachine:
         self.action_count = 0
         self.tick_count = 0
         self.state_count = 0
-        self.walk_tick = 0
+        self.sub_tick = 0
         self.state = State.STOP
 
     def _move_start(self):
@@ -165,17 +165,12 @@ class NekoStateMachine:
             return
         self.tick_count = 0
         self.state_count = 0
-        self.walk_tick = 0
+        self.sub_tick = 0
         self.state = state
         return self.state
 
     def _frame_index(self):
-        pattern = self.animation[self.state]
-        if self.state in _MOVE_STATES:
-            index = (self.walk_tick // self.walk_frame_hold) % len(pattern)
-        else:
-            index = self.tick_count
-        return pattern[index]
+        return self.animation[self.state][self.tick_count]
 
     def tick(
         self,
@@ -220,10 +215,14 @@ class NekoStateMachine:
             self.dx = 0
             self.dy = 0
 
-        self.tick_count = (self.tick_count + 1) % 4
-        if self.tick_count % 2 == 0:
-            self.state_count += 1
-        self.walk_tick += 1
+        # The image only advances once every `frame_hold` ticks, so a high
+        # fps does not make the sprite swap faster.
+        self.sub_tick += 1
+        if self.sub_tick >= self.frame_hold:
+            self.sub_tick = 0
+            self.tick_count = (self.tick_count + 1) % 4
+            if self.tick_count % 2 == 0:
+                self.state_count += 1
 
         result_x = position.x
         result_y = position.y
