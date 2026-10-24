@@ -45,4 +45,6 @@ jobs:
           tag_name: v${{ steps.version.outputs.VERSION }}
           name: v${{ steps.version.outputs.VERSION }}
           files: dist/neko2020.exe
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
           make_latest: true
