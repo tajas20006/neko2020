@@ -14,6 +14,9 @@ class IConfigProvider(ABC):
     def get_string(self, path: str) -> str: ...
 
     @abstractmethod
+    def get_bool(self, path: str) -> bool: ...
+
+    @abstractmethod
     def reload(self) -> None: ...
 
 

@@ -73,6 +73,9 @@ def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
         max_speed=config.get_int("speed.max"),
         idle_space=config.get_int("idle_space"),
         offset=Point(config.get_int("offset.x"), config.get_int("offset.y")),
+        wander_enabled=config.get_bool("wander.enabled"),
+        wander_time=config.get_int("wander.sleep_time"),
+        wander_rand=config.get_int("wander.rand"),
     )
 
 

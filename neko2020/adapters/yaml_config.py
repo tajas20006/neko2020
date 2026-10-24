@@ -50,3 +50,8 @@ class YamlConfigProvider(IConfigProvider):
 
     def get_string(self, path: str) -> str:
         return str(self._get_value(path))
+
+    def get_bool(self, path: str) -> bool:
+        # BaseLoader keeps YAML scalars as strings, so parse them here.
+        value = str(self._get_value(path)).strip().lower()
+        return value in ("true", "1", "yes", "on")
