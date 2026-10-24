@@ -15,7 +15,7 @@ Scheduler = Callable[[int, Callable[[], None]], None]
 
 # A floor only, to avoid a ZeroDivisionError from a zero/negative fps
 # in a hand-edited config.yml. Walk-cycle flicker at high fps is
-# controlled separately via duration.walk_frame_hold.
+# controlled separately via frame_hold.
 MIN_FPS = 1
 
 
