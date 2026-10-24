@@ -5,54 +5,71 @@ description: Major modules and their responsibilities
 
 # Components
 
-## `neko2020/__main__.py` — Entry Point
+## `neko2020/__main__.py` — Composition Root
 
-- Creates full-screen transparent Tkinter window
-- Applies Windows API flags for click-through and Alt+Tab hiding
-- Builds system tray icon with Start / Stop / Restart / Quit callbacks
-- Starts the animation loop via `root.after(fps, tick)`
-- Instantiates `Neko` and `Pet`; calls them each tick
+- Enumerates monitors (ctypes `EnumDisplayMonitors`) and creates a Tkinter window spanning the virtual screen
+- Applies transparency, click-through, and Alt+Tab hiding; positions the window with `SetWindowPos`
+- Builds `YamlConfigProvider`, `TkinterCursorProvider`, `AnimationService`, `ConfigDialog`, and the pystray tray menu (Config / Stop / Start / Restart / Quit)
+- Supplies the session factory that creates a fresh `(NekoStateMachine, TkinterRenderer)` pair on each start/restart, starting the pet at the cursor's monitor
 
-## `neko2020/neko.py` — Neko (State Machine)
+## `domain/state_machine.py` — NekoStateMachine
 
-Central logic class. Responsibilities:
+Central logic class; pure Python, no I/O. Responsibilities:
 
-- Tracks pet position (`x`, `y`) and current `state`
-- Each `tick()` call: reads cursor position, calculates direction angle, chooses next state, advances animation frame
-- Direction chosen by dividing the circle into 8 sectors using `math.sin(math.pi / 8)`
-- Frame index cycles through a 4-element list per state (e.g., `[neko2R_1, neko2R_2]` for right movement)
-- Idle timers count ticks to transition STOP → WASH → SCRATCH → YAWN → SLEEP
+- `tick(cursor, position, size, bounds) -> TickResult(frame_index, x, y)` — the single domain call per frame
+- Computes velocity toward the cursor, capped at `speed.max` and clamped to the monitor bounds (inset by half the sprite size)
+- Direction chosen by dividing the circle into 8 sectors using `sin(pi/8)` thresholds
+- Idle timers drive STOP → WASH (or *_CLAW at screen edges) → SCRATCH → YAWN → SLEEP; cursor movement beyond `idle_space` wakes the pet (AWAKE) before it chases
+- Maps each `State` enum member to a 4-element list of integer frame indices
 
-## `neko2020/pet.py` — Pet (Renderer)
+## `domain/value_objects.py` — Value Objects
 
-- Holds a Tkinter `Canvas` and a `PhotoImage` item
-- `update(state, frame, x, y)` swaps the image and moves the canvas item
-- Caches loaded `ImageTk.PhotoImage` objects to avoid re-loading
-- Reads `animal` from config; if `"random"`, picks a random resource subdirectory at startup
-
-## `neko2020/utils/configs.py` — Config
-
-- Loads `config/default_config.yml` at import time
-- Deep-merges with `~/.config/neko2020/config.yml` (or `$XDG_CONFIG_HOME/neko2020/config.yml`) if present
-- `get_int(path)`, `get_float(path)`, `get_str(path)` — dot-notation accessors
-
-## `neko2020/utils/images.py` — Image Loader
-
-- `load_images(animal, size)` — returns a dict mapping icon-name → `ImageTk.PhotoImage`
-- Looks up sprites under `resource/<animal>/`
-- Icon names are hard-coded in a fixed list matching the standard animation sequence
-
-## `neko2020/utils/classes.py` — Data Classes
-
-Simple named tuples:
+Frozen dataclasses:
 
 | Class | Fields |
 |---|---|
 | `Point` | `x`, `y` |
 | `Size` | `cx`, `cy` |
-| `Rect` | `left`, `top`, `right`, `bottom` |
+| `Rect` | `left`, `top`, `right`, `bottom` (+ `width`/`height` properties) |
 
-## `neko2020/utils/files.py` — File Helpers
+## `application/animation_service.py` — AnimationService
 
-- `get_project_root()` — returns the directory containing the package
-- `select_random_directory(path)` — returns a random subdirectory path (used for random animal)
+- Owns the tick loop via an injected scheduler (`root.after`)
+- `start()` / `stop()` / `restart()` — tray- and dialog-driven lifecycle; restart waits for the loop to stop, then rebuilds the session
+- Picks the monitor rect containing the cursor each tick so the pet stays on the active display
+- Keeps an idle pump running while stopped so the Tk loop stays alive
+
+## `application/ports.py` — Ports
+
+ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` (`get_int/get_float/get_string/reload`), `ICursorProvider` (`get_cursor_position`), `IRenderer` (`render/get_position/get_size/get_bounds`).
+
+## `adapters/tkinter_renderer.py` — TkinterRenderer
+
+- Loads the 32 sprites for the configured animal (resolving `"random"` across bundled and user resource dirs)
+- `render(frame_index, x, y)` redraws the single canvas image when the frame or position changed, converting screen coords to canvas coords
+
+## `adapters/tkinter_cursor.py` — TkinterCursorProvider
+
+- `get_cursor_position()` via `winfo_pointerx/y` (virtual-screen coordinates)
+
+## `adapters/yaml_config.py` — YamlConfigProvider
+
+- `reload()` loads `config/default_config.yml` and deep-merges the user config over it (BaseLoader: scalars stay strings; typed accessors convert)
+- Dot-notation accessors: `get_int`, `get_float`, `get_string`
+
+## `infrastructure/image_loader.py` — Image Loader
+
+- `load_images(animal, scale, user_resource_base)` — returns the ordered list of 32 `ImageTk.PhotoImage` objects plus sprite width/height
+- The ordered icon-name list is hard-coded here; filenames under `resource/<animal>/` must match exactly
+- User resource dir (`~/.config/neko2020/resources/<animal>/`) takes priority over the bundled `resource/`
+
+## `infrastructure/files.py` — File Helpers
+
+- `get_project_root()`, `get_user_resource_dir()`
+- `select_random_directory_merged(project_dir, user_dir)` — random animal across both locations
+
+## `ui/config_dialog.py` — ConfigDialog
+
+- Tray-opened Toplevel with tabbed sections (Appearance / Movement / Behavior Timing / Performance) generated from a declarative field list
+- Animal field is a read-only combobox listing bundled + user sprite sets plus `"random"`
+- Apply writes the user config (with `.bak` backup) and restarts the animation on a background thread

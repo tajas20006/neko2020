@@ -13,14 +13,14 @@ Requires an OpenAI API key (`OPENAI_API_KEY` environment variable).
 **Cost: ~$1.50 per full set of 32 icons.**
 
 ```bash
-uv sync --group imgen-gpt
+uv sync --extra imgen-gpt
 
 # From a text prompt
-uv run --group imgen-gpt python tools/generate_pet_gpt.py \
+uv run --extra imgen-gpt python tools/generate_pet_gpt.py \
     --name mycat --prompt "cute orange tabby cat"
 
 # From a hand-drawn character (recommended for best results)
-uv run --group imgen-gpt python tools/generate_pet_gpt.py \
+uv run --extra imgen-gpt python tools/generate_pet_gpt.py \
     --name mycat --prompt "cute orange tabby cat" \
     --base-image mycharacter.png
 ```
@@ -45,9 +45,9 @@ Uses Stable Diffusion locally via diffusers. No API cost, but requires
 a CUDA GPU and several GB of VRAM.
 
 ```bash
-uv sync --group imgen
+uv sync --extra imgen
 
-uv run --group imgen python tools/generate_pet.py \
+uv run --extra imgen python tools/generate_pet.py \
     --name mycat --prompt "cute orange tabby cat"
 ```
 
