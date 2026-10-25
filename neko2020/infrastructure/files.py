@@ -6,12 +6,16 @@ def get_project_root():
     return os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
-def get_user_resource_dir():
+def get_user_config_dir():
     xdg_config_home = os.getenv(
         "XDG_CONFIG_HOME",
         os.path.join(os.path.expanduser("~"), ".config"),
     )
-    return os.path.join(xdg_config_home, "neko2020", "resources")
+    return os.path.join(xdg_config_home, "neko2020")
+
+
+def get_user_resource_dir():
+    return os.path.join(get_user_config_dir(), "resources")
 
 
 def select_random_directory(basedir):

@@ -127,3 +127,10 @@ def test_merged_both_missing_raises_index_error(tmp_path):
         select_random_directory_merged(
             str(tmp_path / "nope1"), str(tmp_path / "nope2")
         )
+
+
+def test_get_user_config_dir_respects_xdg_config_home(tmp_path, monkeypatch):
+    from neko2020.infrastructure.files import get_user_config_dir
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert get_user_config_dir() == str(tmp_path / "neko2020")

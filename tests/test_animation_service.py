@@ -196,14 +196,26 @@ def test_stop_schedules_idle_pump_once():
     assert len(scheduled) == 1
 
 
-def test_tick_after_stop_sets_stopped_event_without_rendering():
+def test_stale_tick_after_stop_does_not_render():
     svc, _, renderer, _, scheduled = _make_service()
     svc.start()
+    _, stale_tick = scheduled[-1]
     svc.stop()
     renderer.render.reset_mock()
-    svc._tick()
+    stale_tick()
     renderer.render.assert_not_called()
-    assert svc._stopped_event.is_set()
+
+
+def test_stale_tick_after_restart_does_not_double_the_loop():
+    svc, sm, _, _, scheduled = _make_service()
+    svc.start()
+    _, stale_tick = scheduled[-1]
+    svc.restart()
+    scheduled.clear()
+    sm.tick.reset_mock()
+    stale_tick()
+    sm.tick.assert_not_called()
+    assert scheduled == []
 
 
 def test_idle_pump_rearms_while_stopped():
@@ -228,7 +240,6 @@ def test_restart_stops_then_starts_again():
     svc, sm, *_ = _make_service()
     svc.start()
     svc.stop()
-    svc._tick()
     svc.restart()
     assert not svc._stopped
     assert sm.tick.call_count == 2

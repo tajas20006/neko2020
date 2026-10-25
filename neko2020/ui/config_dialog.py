@@ -1,6 +1,5 @@
 import os
 import shutil
-import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
 
@@ -134,8 +133,8 @@ def _write_config(user_path: str, data: dict) -> None:
     os.makedirs(os.path.dirname(user_path), exist_ok=True)
     if os.path.exists(user_path):
         shutil.copy2(user_path, user_path + ".bak")
-    with open(user_path, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
+    with open(user_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, default_flow_style=False)
 
 
 class ConfigDialog:
@@ -278,7 +277,7 @@ class ConfigDialog:
             return False
         self._maybe_scale_for_fps(data)
         _write_config(self._user_path, data)
-        threading.Thread(target=self._service.restart, daemon=True).start()
+        self._service.restart()
         self._initial_fps = data.get("fps", self._initial_fps)
         return True
 

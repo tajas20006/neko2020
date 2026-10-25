@@ -165,3 +165,13 @@ def test_missing_nested_key_raises(tmp_path):
     p.reload()
     with pytest.raises(TypeError):
         p.get_int("speed.max")
+
+
+def test_empty_user_config_is_ignored(tmp_path):
+    default = tmp_path / "default.yml"
+    default.write_text("fps: 4\n")
+    user = tmp_path / "user.yml"
+    user.write_text("")
+    p = YamlConfigProvider(str(default), str(user))
+    p.reload()
+    assert p.get_int("fps") == 4

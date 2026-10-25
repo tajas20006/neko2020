@@ -6,7 +6,7 @@ from neko2020.infrastructure import files
 
 
 def resize_image(img, scale):
-    if type(scale) in {int, float}:
+    if isinstance(scale, int | float):
         scale = {"x": scale, "y": scale}
     return img.resize(
         (int(img.width * scale["x"]), int(img.height * scale["y"]))
@@ -23,7 +23,7 @@ def _resolve_animal_dir(animal, user_resource_base):
 
 def load_images(
     animal="neko",
-    scale={"x": 1.0, "y": 1.0},
+    scale=1.0,
     user_resource_base=None,
 ):
     # fmt: off
@@ -44,8 +44,8 @@ def load_images(
     base_icon_dir = _resolve_animal_dir(animal, user_resource_base)
     for name in icon_names:
         icon_path = os.path.join(base_icon_dir, ".".join([name, "ico"]))
-        img = Image.open(icon_path)
-        img = resize_image(img, scale)
+        with Image.open(icon_path) as src:
+            img = resize_image(src, scale)
         icons.append(ImageTk.PhotoImage(img))
 
     return icons, img.width, img.height

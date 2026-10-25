@@ -346,9 +346,6 @@ def _saved_dialog(monkeypatch):
     monkeypatch.setattr(
         "neko2020.ui.config_dialog._write_config", lambda *a, **kw: None
     )
-    monkeypatch.setattr(
-        "neko2020.ui.config_dialog.threading.Thread", MagicMock()
-    )
     dialog._win = MagicMock()
     return dialog
 

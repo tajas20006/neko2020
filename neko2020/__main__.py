@@ -102,11 +102,7 @@ if __name__ == "__main__":
     ctypes.windll.user32.SetWindowPos(hwnd, None, vx, vy, vw, vh, SWP_NOZORDER)
 
     project_root = files.get_project_root()
-    xdg_config_home = os.getenv(
-        "XDG_CONFIG_HOME",
-        os.path.join(os.path.expanduser("~"), ".config"),
-    )
-    user_config_path = os.path.join(xdg_config_home, "neko2020", "config.yml")
+    user_config_path = os.path.join(files.get_user_config_dir(), "config.yml")
     config = YamlConfigProvider(
         default_path=os.path.join(
             project_root, "config", "default_config.yml"
@@ -142,8 +138,10 @@ if __name__ == "__main__":
         service=service,
     )
 
-    def _open_config():
-        root.after(0, config_dialog.open)
+    def _on_tk_thread(callback):
+        # pystray invokes menu callbacks on its own thread, but Tk widgets
+        # and the animation service must only be touched from the Tk one.
+        return lambda icon, item: root.after(0, callback)
 
     icon_path = os.path.join(project_root, "resource", "neko", "Awake.ico")
     tray_icon = pystray.Icon(
@@ -152,12 +150,12 @@ if __name__ == "__main__":
         "neko",
         menu=pystray.Menu(
             pystray.MenuItem(
-                "Config", lambda i, item: _open_config(), default=True
+                "Config", _on_tk_thread(config_dialog.open), default=True
             ),
-            pystray.MenuItem("Stop", lambda i, item: service.stop()),
-            pystray.MenuItem("Start", lambda i, item: service.start()),
-            pystray.MenuItem("Restart", lambda i, item: service.restart()),
-            pystray.MenuItem("Quit", lambda i, item: root.quit()),
+            pystray.MenuItem("Stop", _on_tk_thread(service.stop)),
+            pystray.MenuItem("Start", _on_tk_thread(service.start)),
+            pystray.MenuItem("Restart", _on_tk_thread(service.restart)),
+            pystray.MenuItem("Quit", _on_tk_thread(root.quit)),
         ),
     )
     tray_icon.run_detached()

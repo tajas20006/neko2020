@@ -26,11 +26,11 @@ class YamlConfigProvider(IConfigProvider):
         self._config: dict = {}
 
     def reload(self) -> None:
-        with open(self._default_path) as f:
-            config = yaml.load(f, Loader=yaml.BaseLoader)
+        with open(self._default_path, encoding="utf-8") as f:
+            config = yaml.load(f, Loader=yaml.BaseLoader) or {}
         if os.path.exists(self._user_path):
-            with open(self._user_path) as f:
-                user_config = yaml.load(f, Loader=yaml.BaseLoader)
+            with open(self._user_path, encoding="utf-8") as f:
+                user_config = yaml.load(f, Loader=yaml.BaseLoader) or {}
             config = _deep_merge(config, user_config)
         self._config = config
 

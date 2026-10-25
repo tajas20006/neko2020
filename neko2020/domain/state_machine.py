@@ -5,11 +5,9 @@ from enum import Enum, auto
 
 from neko2020.domain.value_objects import Point, Rect, Size
 
-# define angle border
-# sin(pi / 8)
-SinPiPer8 = 0.3826834323651
-# sin(pi/8*3)
-SinPiPer8Times3 = 0.9238795325113
+# sector borders when the circle is divided into 8 directions
+SIN_PI_8 = math.sin(math.pi / 8)
+SIN_3PI_8 = math.sin(math.pi * 3 / 8)
 
 
 class State(Enum):
@@ -50,7 +48,7 @@ _MOVE_STATES = frozenset(
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TickResult:
     frame_index: int
     x: int
@@ -140,32 +138,19 @@ class NekoStateMachine:
         if self.dx == 0 and self.dy == 0:
             return self._set_new_state(State.STOP)
 
-        length = math.sqrt(self.dx * self.dx + self.dy * self.dy)
-        sin_theta = -self.dy / length
-
-        if self.dx > 0:
-            if sin_theta > SinPiPer8Times3:
-                return self._set_new_state(State.U_MOVE)
-            if sin_theta <= SinPiPer8Times3 and sin_theta > SinPiPer8:
-                return self._set_new_state(State.UR_MOVE)
-            if sin_theta <= SinPiPer8 and sin_theta > -SinPiPer8:
-                return self._set_new_state(State.R_MOVE)
-            if sin_theta <= -SinPiPer8 and sin_theta > -SinPiPer8Times3:
-                return self._set_new_state(State.DR_MOVE)
-            if self.state != State.D_MOVE:
-                return self._set_new_state(State.D_MOVE)
-
-        # moving left
-        if sin_theta > SinPiPer8Times3:
-            return self._set_new_state(State.U_MOVE)
-        if sin_theta <= SinPiPer8Times3 and sin_theta > SinPiPer8:
-            return self._set_new_state(State.UL_MOVE)
-        if sin_theta <= SinPiPer8 and sin_theta > -SinPiPer8:
-            return self._set_new_state(State.L_MOVE)
-        if sin_theta <= -SinPiPer8 and sin_theta > -SinPiPer8Times3:
-            return self._set_new_state(State.DL_MOVE)
-        if self.state != State.D_MOVE:
-            return self._set_new_state(State.D_MOVE)
+        sin_theta = -self.dy / math.hypot(self.dx, self.dy)
+        # straight up/down are shared by both halves of the circle
+        if sin_theta > SIN_3PI_8:
+            state = State.U_MOVE
+        elif sin_theta > SIN_PI_8:
+            state = State.UR_MOVE if self.dx > 0 else State.UL_MOVE
+        elif sin_theta > -SIN_PI_8:
+            state = State.R_MOVE if self.dx > 0 else State.L_MOVE
+        elif sin_theta > -SIN_3PI_8:
+            state = State.DR_MOVE if self.dx > 0 else State.DL_MOVE
+        else:
+            state = State.D_MOVE
+        return self._set_new_state(state)
 
     def _set_new_state(self, state):
         if self.state == state:
