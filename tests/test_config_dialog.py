@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 from neko2020.application.animation_service import MIN_FPS
+from neko2020.ui import config_dialog
 from neko2020.ui.config_dialog import (
     ConfigDialog,
     _parse_int_field,
@@ -251,3 +252,40 @@ def test_do_save_updates_initial_fps_baseline(monkeypatch):
     )
     assert dialog._do_save() is True
     assert dialog._initial_fps == 60
+
+
+def test_collect_returns_bool_for_wander_enabled():
+    dialog = _make_dialog_with_vars({"wander.enabled": True})
+    data = dialog._collect()
+    assert data is not None
+    assert data["wander"]["enabled"] is True
+    assert data["wander"]["sleep_time"] == 100
+    assert data["wander"]["rand"] == 100
+
+
+def test_collect_returns_false_for_unchecked_wander():
+    dialog = _make_dialog_with_vars({"wander.enabled": False})
+    data = dialog._collect()
+    assert data["wander"]["enabled"] is False
+
+
+def test_open_builds_checkbox_for_bool_fields(monkeypatch):
+    fake_tk = MagicMock()
+    monkeypatch.setattr(config_dialog, "tk", fake_tk)
+    monkeypatch.setattr(config_dialog, "ttk", MagicMock())
+    monkeypatch.setattr(config_dialog, "_get_animals", lambda: ["neko"])
+    config = MagicMock()
+    config.get_bool.return_value = True
+    config.get_string.return_value = "x"
+    dialog = ConfigDialog(
+        parent=MagicMock(),
+        config=config,
+        user_path="/tmp/unused-config.yml",
+        service=MagicMock(),
+    )
+    dialog.open()
+    config.get_bool.assert_called_once_with("wander.enabled")
+    fake_tk.BooleanVar.assert_called_once_with(value=True)
+    fake_tk.Checkbutton.assert_called_once()
+    assert dialog._vars["wander.enabled"] is fake_tk.BooleanVar.return_value
+    assert "wander.sleep_time" in dialog._vars
