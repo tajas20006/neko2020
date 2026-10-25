@@ -61,7 +61,7 @@ those used by the built-in sets.
 Source and Building
 ------------------
 
-Supported Python versions: ``3.12`` to ``3.13``.
+Supported Python versions: ``3.14``.
 
 neko2020 uses the `uv <https://github.com/astral-sh/uv>`_ package manager.
 

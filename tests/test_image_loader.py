@@ -161,3 +161,15 @@ def test_load_images_resolves_icons_under_user_resource_base(tmp_path):
 
     user_neko_dir = str(tmp_path / "neko")
     assert all(p.startswith(user_neko_dir) for p in opened_paths)
+
+
+def test_load_image_opens_icon_under_project_resource():
+    from neko2020.infrastructure.image_loader import load_image
+
+    with patch("neko2020.infrastructure.image_loader.Image.open") as mock_open:
+        result = load_image("neko", "Awake.ico")
+    path = mock_open.call_args[0][0]
+    assert path == os.path.join(
+        files.get_project_root(), "resource", "neko", "Awake.ico"
+    )
+    assert result is mock_open.return_value

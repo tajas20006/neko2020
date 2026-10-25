@@ -172,3 +172,63 @@ def test_tick_passes_first_monitor_when_cursor_in_it():
     svc.start()
     bounds_arg = sm.tick.call_args.args[3]
     assert bounds_arg == MONITOR_A
+
+
+# ---------------------------------------------------------------------------
+# start / stop / restart / idle pump
+# ---------------------------------------------------------------------------
+
+
+def test_start_ticks_and_schedules_next_frame():
+    svc, sm, renderer, _, scheduled = _make_service()
+    svc.start()
+    sm.tick.assert_called_once()
+    renderer.render.assert_called_once_with(0, 960, 540)
+    assert len(scheduled) == 1
+
+
+def test_stop_schedules_idle_pump_once():
+    svc, *_, scheduled = _make_service()
+    svc.start()
+    scheduled.clear()
+    svc.stop()
+    svc.stop()
+    assert len(scheduled) == 1
+
+
+def test_tick_after_stop_sets_stopped_event_without_rendering():
+    svc, _, renderer, _, scheduled = _make_service()
+    svc.start()
+    svc.stop()
+    renderer.render.reset_mock()
+    svc._tick()
+    renderer.render.assert_not_called()
+    assert svc._stopped_event.is_set()
+
+
+def test_idle_pump_rearms_while_stopped():
+    svc, *_, scheduled = _make_service()
+    svc.stop()
+    svc.start()
+    svc.stop()
+    scheduled.clear()
+    svc._idle_pump()
+    assert len(scheduled) == 1
+
+
+def test_idle_pump_does_nothing_when_running():
+    svc, *_, scheduled = _make_service()
+    svc.start()
+    scheduled.clear()
+    svc._idle_pump()
+    assert scheduled == []
+
+
+def test_restart_stops_then_starts_again():
+    svc, sm, *_ = _make_service()
+    svc.start()
+    svc.stop()
+    svc._tick()
+    svc.restart()
+    assert not svc._stopped
+    assert sm.tick.call_count == 2
