@@ -11,7 +11,7 @@ description: Known gaps, platform limitations, and cleanup candidates
 The project description historically said "Cross-Platform," but the overlay setup uses Win32-specific ctypes calls (monitor enumeration, window styles, `SetWindowPos`) with no Linux/macOS code path. `pystray` and the ports-and-adapters structure would support adding one.
 
 ### Hard-coded icon name list
-The ordered list of 32 icon names lives in `infrastructure/image_loader.py`; the per-state frame indices in `domain/state_machine.py` depend on that exact order. Anyone adding sprites must match both. The `tools/` generators produce conforming sets.
+The 32 required icon names live in `ICON_NAMES` in `infrastructure/image_loader.py`; `adapters/sprite_map.py` refers to them by name (a test checks every mapped name exists). Anyone adding sprites must match that list. The `tools/` generators produce conforming sets.
 
 ### UI layer untested
 `ui/config_dialog.py` and `__main__.py` have no test coverage (they require a live Tk/Win32 environment). Domain, application, adapters, and infrastructure modules each have a test file under `tests/`.

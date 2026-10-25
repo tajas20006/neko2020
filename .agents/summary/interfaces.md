@@ -18,7 +18,7 @@ class ICursorProvider(ABC):
     def get_cursor_position() -> Point
 
 class IRenderer(ABC):
-    def render(frame_index: int, x: int, y: int) -> None
+    def render(state: State, phase: int, x: int, y: int) -> None
     def get_position() -> Point
     def get_size() -> Size
     def get_bounds() -> Rect
@@ -38,7 +38,7 @@ NekoStateMachine.tick(
     position: Point,    # current pet position (from renderer)
     size: Size,         # sprite size (for boundary insets)
     bounds: Rect,       # monitor containing the cursor
-) -> TickResult         # (frame_index, x, y)
+) -> TickResult         # (state, phase, x, y)
 ```
 
 `tick` is the only call per animation frame; `AnimationService` wires it to the renderer.

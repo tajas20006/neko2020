@@ -81,7 +81,7 @@ class AnimationService:
             self._renderer.get_size(),
             self._monitor_for(cursor_pos),
         )
-        self._renderer.render(result.frame_index, result.x, result.y)
+        self._renderer.render(result.state, result.phase, result.x, result.y)
         self._scheduler(self._delay_ms(), partial(self._tick, generation))
 
     def _idle_pump(self) -> None:

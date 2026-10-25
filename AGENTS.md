@@ -50,8 +50,8 @@ neko2020/
 
 - The fullscreen Tkinter window is transparent via `'-transparentcolor green'`; mouse events pass through to the desktop. `WS_EX_TOOLWINDOW` (ctypes) hides it from Alt+Tab. The window covers the virtual screen across all monitors and is positioned with `SetWindowPos` because Tk `geometry()` can't express negative coordinates.
 - `__main__.py` owns the Tkinter event loop; `AnimationService` re-arms `root.after(1000 // fps, ...)` each tick. The `pystray` tray icon runs detached on its own thread.
-- `NekoStateMachine.tick(cursor, position, size, bounds)` returns `TickResult(frame_index, x, y)` — this is the single domain call per frame. `bounds` is the monitor currently containing the cursor, so the pet stays on that display.
-- Animation frames are 4-element lists of integer indices per state in `domain/state_machine.py`; the indices refer to the ordered icon-name list hard-coded in `infrastructure/image_loader.py`, and those names must exactly match the `.ico` filenames in each sprite directory.
+- `NekoStateMachine.tick(cursor, position, size, bounds)` returns `TickResult(state, phase, x, y)` — this is the single domain call per frame. `bounds` is the monitor currently containing the cursor, so the pet stays on that display.
+- The domain reports a `State` and a 0-3 animation `phase`; `adapters/sprite_map.py` maps them to icon names, which must exist in `ICON_NAMES` (`infrastructure/image_loader.py`) and match the `.ico` filenames in each sprite directory.
 - `AnimationService.start/stop/restart` (driven from the tray and config dialog) recreate the state machine and renderer via a session factory, so a restart picks up config changes.
 
 ## Repo-Specific Patterns

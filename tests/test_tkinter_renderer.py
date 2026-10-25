@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 
 from neko2020.adapters.tkinter_renderer import TkinterRenderer
+from neko2020.infrastructure.image_loader import ICON_NAMES
+from neko2020.domain.state_machine import State
 from neko2020.domain.value_objects import Point, Rect, Size
-
-_ICON_COUNT = 32
 
 
 def _make_canvas(w=800, h=600):
@@ -29,7 +29,7 @@ def _make_renderer(
 ):
     canvas = _make_canvas(canvas_w, canvas_h)
     config = _make_config(animal)
-    mock_images = [MagicMock() for _ in range(_ICON_COUNT)]
+    mock_images = {name: MagicMock() for name in ICON_NAMES}
 
     with (
         patch(
@@ -82,19 +82,19 @@ def test_get_bounds_zero_origin():
 
 def test_render_clears_canvas_before_drawing():
     renderer, canvas, _imgs = _make_renderer()
-    renderer.render(0, 100, 100)
+    renderer.render(State.STOP, 0, 100, 100)
     canvas.delete.assert_called_with("all")
 
 
 def test_render_creates_image_on_canvas():
     renderer, canvas, _imgs = _make_renderer()
-    renderer.render(0, 100, 100)
+    renderer.render(State.STOP, 0, 100, 100)
     canvas.create_image.assert_called_once()
 
 
 def test_render_subtracts_virtual_origin_from_coords():
     renderer, canvas, _imgs = _make_renderer(vx=50, vy=30)
-    renderer.render(0, 200, 130)
+    renderer.render(State.STOP, 0, 200, 130)
     args = canvas.create_image.call_args.args
     assert args[0] == 150  # 200 - 50
     assert args[1] == 100  # 130 - 30
@@ -102,39 +102,39 @@ def test_render_subtracts_virtual_origin_from_coords():
 
 def test_render_passes_correct_frame_image():
     renderer, canvas, imgs = _make_renderer()
-    renderer.render(5, 100, 100)
+    renderer.render(State.R_MOVE, 0, 100, 100)
     kwargs = canvas.create_image.call_args.kwargs
-    assert kwargs["image"] is imgs[5]
+    assert kwargs["image"] is imgs["right1"]
 
 
 def test_render_updates_stored_position():
     renderer, _c, _imgs = _make_renderer(initial=Point(0, 0))
-    renderer.render(0, 300, 400)
+    renderer.render(State.STOP, 0, 300, 400)
     assert renderer.get_position() == Point(300, 400)
 
 
 def test_render_skips_redraw_when_frame_and_position_unchanged():
     renderer, canvas, _imgs = _make_renderer(initial=Point(0, 0))
-    renderer.render(0, 100, 100)
+    renderer.render(State.STOP, 0, 100, 100)
     canvas.reset_mock()
-    renderer.render(0, 100, 100)
+    renderer.render(State.STOP, 0, 100, 100)
     canvas.delete.assert_not_called()
     canvas.create_image.assert_not_called()
 
 
-def test_render_redraws_when_frame_index_changes():
+def test_render_redraws_when_sprite_changes():
     renderer, canvas, _imgs = _make_renderer()
-    renderer.render(0, 100, 100)
+    renderer.render(State.STOP, 0, 100, 100)
     canvas.reset_mock()
-    renderer.render(1, 100, 100)
+    renderer.render(State.R_MOVE, 1, 100, 100)
     canvas.create_image.assert_called_once()
 
 
 def test_render_redraws_when_position_changes():
     renderer, canvas, _imgs = _make_renderer()
-    renderer.render(0, 100, 100)
+    renderer.render(State.STOP, 0, 100, 100)
     canvas.reset_mock()
-    renderer.render(0, 200, 100)
+    renderer.render(State.STOP, 0, 200, 100)
     canvas.create_image.assert_called_once()
 
 
@@ -146,7 +146,7 @@ def test_render_redraws_when_position_changes():
 def test_random_animal_calls_select_random_directory_merged():
     canvas = _make_canvas()
     config = _make_config("random")
-    mock_images = [MagicMock() for _ in range(_ICON_COUNT)]
+    mock_images = {name: MagicMock() for name in ICON_NAMES}
 
     with (
         patch(
@@ -170,7 +170,7 @@ def test_random_animal_calls_select_random_directory_merged():
 def test_non_random_animal_does_not_call_select_random_directory_merged():
     canvas = _make_canvas()
     config = _make_config("neko")
-    mock_images = [MagicMock() for _ in range(_ICON_COUNT)]
+    mock_images = {name: MagicMock() for name in ICON_NAMES}
 
     with (
         patch(
@@ -188,3 +188,11 @@ def test_non_random_animal_does_not_call_select_random_directory_merged():
         TkinterRenderer(canvas, config, 0, 0, Point(0, 0))
 
     mock_rand.assert_not_called()
+
+
+def test_render_skips_redraw_when_different_phase_has_same_sprite():
+    renderer, canvas, _imgs = _make_renderer()
+    renderer.render(State.STOP, 0, 100, 100)
+    canvas.reset_mock()
+    renderer.render(State.STOP, 1, 100, 100)
+    canvas.create_image.assert_not_called()

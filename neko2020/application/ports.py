@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from neko2020.domain.state_machine import State
 from neko2020.domain.value_objects import Point, Rect, Size
 
 
@@ -27,7 +28,7 @@ class ICursorProvider(ABC):
 
 class IRenderer(ABC):
     @abstractmethod
-    def render(self, frame_index: int, x: int, y: int) -> None: ...
+    def render(self, state: State, phase: int, x: int, y: int) -> None: ...
 
     @abstractmethod
     def get_position(self) -> Point: ...

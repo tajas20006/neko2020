@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 from neko2020.application.animation_service import MIN_FPS, AnimationService
+from neko2020.domain.state_machine import State
 from neko2020.domain.value_objects import Point, Rect, Size
 
 MONITOR_A = Rect(0, 0, 1920, 1080)
@@ -21,7 +22,8 @@ def _make_service(monitors=None, fps=4, cursor_pos=None):
 
     sm = MagicMock()
     tick_result = MagicMock()
-    tick_result.frame_index = 0
+    tick_result.state = State.STOP
+    tick_result.phase = 0
     tick_result.x = 960
     tick_result.y = 540
     sm.tick.return_value = tick_result
@@ -90,7 +92,7 @@ def test_start_runs_first_tick_and_schedules_next():
     svc, sm, renderer, cursor, scheduled = _make_service()
     svc.start()
     sm.tick.assert_called_once()
-    renderer.render.assert_called_once_with(0, 960, 540)
+    renderer.render.assert_called_once_with(State.STOP, 0, 960, 540)
     assert len(scheduled) == 1
 
 
@@ -183,7 +185,7 @@ def test_start_ticks_and_schedules_next_frame():
     svc, sm, renderer, _, scheduled = _make_service()
     svc.start()
     sm.tick.assert_called_once()
-    renderer.render.assert_called_once_with(0, 960, 540)
+    renderer.render.assert_called_once_with(State.STOP, 0, 960, 540)
     assert len(scheduled) == 1
 
 

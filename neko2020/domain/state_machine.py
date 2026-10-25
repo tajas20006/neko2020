@@ -50,7 +50,9 @@ _MOVE_STATES = frozenset(
 
 @dataclass(frozen=True, slots=True)
 class TickResult:
-    frame_index: int
+    state: State
+    # position in the state's 4-step animation cycle (0-3)
+    phase: int
     x: int
     y: int
 
@@ -85,27 +87,6 @@ class NekoStateMachine:
         self.wander_enabled = wander_enabled
         self.WANDER_TIME = wander_time
         self.WANDER_RND = wander_rand
-
-        self.animation = {
-            State.STOP: [28, 28, 28, 28],
-            State.WASH: [25, 28, 25, 28],
-            State.SCRATCH: [26, 27, 26, 27],
-            State.YAWN: [28, 29, 28, 29],
-            State.SLEEP: [30, 30, 31, 31],
-            State.AWAKE: [0, 0, 0, 0],
-            State.U_MOVE: [1, 2, 1, 2],
-            State.D_MOVE: [9, 10, 9, 10],
-            State.L_MOVE: [13, 14, 13, 14],
-            State.R_MOVE: [5, 6, 5, 6],
-            State.UL_MOVE: [15, 16, 15, 16],
-            State.UR_MOVE: [3, 4, 3, 4],
-            State.DL_MOVE: [11, 12, 11, 12],
-            State.DR_MOVE: [7, 8, 7, 8],
-            State.U_CLAW: [17, 18, 17, 18],
-            State.D_CLAW: [23, 24, 23, 24],
-            State.L_CLAW: [21, 22, 21, 22],
-            State.R_CLAW: [19, 20, 19, 20],
-        }
 
         self.dx = 0
         self.dy = 0
@@ -169,9 +150,6 @@ class NekoStateMachine:
             random.randint(bounds.left + half_cx, bounds.right - half_cx),
             random.randint(bounds.top + half_cy, bounds.bottom - half_cy),
         )
-
-    def _frame_index(self):
-        return self.animation[self.state][self.tick_count]
 
     def tick(
         self,
@@ -327,7 +305,8 @@ class NekoStateMachine:
             self._set_new_state(State.STOP)
 
         return TickResult(
-            frame_index=self._frame_index(),
+            state=self.state,
+            phase=self.tick_count,
             x=result_x,
             y=result_y,
         )

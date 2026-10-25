@@ -43,8 +43,8 @@ sequenceDiagram
     Service->>SM: tick(cursor, position, size, bounds)
     SM->>SM: velocity toward cursor (capped, clamped)
     SM->>SM: advance state machine + frame cycle
-    SM-->>Service: TickResult(frame_index, x, y)
-    Service->>Renderer: render(frame_index, x, y)
+    SM-->>Service: TickResult(state, phase, x, y)
+    Service->>Renderer: render(state, phase, x, y)
     Renderer->>Renderer: redraw canvas image if changed
     Service->>Service: root.after(1000 // fps, tick)
 ```

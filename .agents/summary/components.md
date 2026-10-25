@@ -16,11 +16,11 @@ description: Major modules and their responsibilities
 
 Central logic class; pure Python, no I/O. Responsibilities:
 
-- `tick(cursor, position, size, bounds) -> TickResult(frame_index, x, y)` — the single domain call per frame
+- `tick(cursor, position, size, bounds) -> TickResult(state, phase, x, y)` — the single domain call per frame
 - Computes velocity toward the cursor, capped at `speed.max` and clamped to the monitor bounds (inset by half the sprite size)
 - Direction chosen by dividing the circle into 8 sectors using `sin(pi/8)` thresholds
 - Idle timers drive STOP → WASH (or *_CLAW at screen edges) → SCRATCH → YAWN → SLEEP; cursor movement beyond `idle_space` wakes the pet (AWAKE) before it chases
-- Maps each `State` enum member to a 4-element list of integer frame indices
+- Reports the current `State` and a 0-3 animation `phase`; sprite choice lives in `adapters/sprite_map.py`
 
 ## `domain/value_objects.py` — Value Objects
 
@@ -46,7 +46,7 @@ ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` 
 ## `adapters/tkinter_renderer.py` — TkinterRenderer
 
 - Loads the 32 sprites for the configured animal (resolving `"random"` across bundled and user resource dirs)
-- `render(frame_index, x, y)` redraws the single canvas image when the frame or position changed, converting screen coords to canvas coords
+- `render(state, phase, x, y)` redraws the single canvas image when the sprite or position changed, converting screen coords to canvas coords
 
 ## `adapters/tkinter_cursor.py` — TkinterCursorProvider
 
@@ -60,7 +60,7 @@ ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` 
 ## `infrastructure/image_loader.py` — Image Loader
 
 - `load_images(animal, scale, user_resource_base)` — returns the ordered list of 32 `ImageTk.PhotoImage` objects plus sprite width/height
-- The ordered icon-name list is hard-coded here; filenames under `resource/<animal>/` must match exactly
+- `ICON_NAMES` (the required sprite files) is defined here; filenames under `resource/<animal>/` must match exactly
 - User resource dir (`~/.config/neko2020/resources/<animal>/`) takes priority over the bundled `resource/`
 
 ## `infrastructure/files.py` — File Helpers

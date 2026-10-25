@@ -60,13 +60,13 @@ __main__.py     # Composition root: window setup, wiring, tray menu
 ```
 AnimationService._tick()
   → NekoStateMachine.tick(cursor, position, size, bounds)
-      returns TickResult(frame_index, x, y)
-  → TkinterRenderer.render(frame_index, x, y)
+      returns TickResult(state, phase, x, y)
+  → TkinterRenderer.render(state, phase, x, y)
       swaps PhotoImage on the canvas
   → scheduler re-arms root.after(1000 // fps, ...)
 ```
 
-`NekoStateMachine` (`domain/state_machine.py`) owns all behavior logic: an 18-state machine (`STOP`, `WASH`, `SCRATCH`, `YAWN`, `SLEEP`, `AWAKE`, 8 directional moves, 4 claw states) as a `State` enum. Direction to the cursor is computed by dividing the circle into 8 sectors with `math.sin(math.pi / 8)`. Each state maps to a 4-element list of integer frame indices; the indices point into the ordered 32-icon list hard-coded in `infrastructure/image_loader.py`, whose names must exactly match filenames under `resource/<animal>/`.
+`NekoStateMachine` (`domain/state_machine.py`) owns all behavior logic: an 18-state machine (`STOP`, `WASH`, `SCRATCH`, `YAWN`, `SLEEP`, `AWAKE`, 8 directional moves, 4 claw states) as a `State` enum. Direction to the cursor is computed by dividing the circle into 8 sectors with `math.sin(math.pi / 8)`. The domain knows nothing about sprites: each tick reports the `State` and a 0-3 animation `phase`, and `adapters/sprite_map.py` maps them to icon names from `ICON_NAMES` in `infrastructure/image_loader.py`, which must exactly match filenames under `resource/<animal>/`.
 
 `TkinterRenderer` (`adapters/tkinter_renderer.py`) is purely visual: it loads the 32 `.ico` sprites via Pillow, keeps `ImageTk.PhotoImage` objects, and redraws a single canvas item when the frame or position changes.
 
