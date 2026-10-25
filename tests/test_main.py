@@ -38,7 +38,6 @@ def wiring(monkeypatch):
         "files",
     ):
         monkeypatch.setattr(app, name, getattr(mocks, name))
-    monkeypatch.setattr(app, "_build_state_machine", mocks.build_sm)
     return mocks
 
 
@@ -77,11 +76,15 @@ def test_main_session_factory_places_pet_at_cursor(wiring):
     app.main()
 
     factory = wiring.AnimationService.call_args.kwargs["session_factory"]
-    state_machine, renderer = factory()
+    settings = MagicMock()
+    state_machine, renderer = factory(settings)
 
-    assert state_machine is wiring.build_sm.return_value
+    wiring.NekoStateMachine.assert_called_once_with(settings.behavior)
+    assert state_machine is wiring.NekoStateMachine.return_value
     assert renderer is wiring.TkinterRenderer.return_value
-    assert wiring.TkinterRenderer.call_args.args[-1] == Point(5, 6)
+    args = wiring.TkinterRenderer.call_args.args
+    assert args[1] == settings.animal
+    assert args[-1] == Point(5, 6)
 
 
 def test_main_scheduler_delegates_to_tk_after(wiring):
