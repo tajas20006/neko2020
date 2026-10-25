@@ -13,6 +13,7 @@ class IConfigProvider(ABC):
     def get_float(path: str) -> float
     def get_string(path: str) -> str
     def reload() -> None
+    def save(data: dict) -> None   # write user config (+ .bak backup)
 
 class ICursorProvider(ABC):
     def get_cursor_position() -> Point

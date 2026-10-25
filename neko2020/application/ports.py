@@ -20,6 +20,10 @@ class IConfigProvider(ABC):
     @abstractmethod
     def reload(self) -> None: ...
 
+    @abstractmethod
+    def save(self, data: dict) -> None:
+        """Persist `data` as the user's settings, replacing the old ones."""
+
 
 class ICursorProvider(ABC):
     @abstractmethod

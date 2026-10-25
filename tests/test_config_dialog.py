@@ -101,8 +101,8 @@ def _make_dialog_with_vars(overrides: dict[str, str | bool], initial_fps=4):
     dialog = ConfigDialog(
         parent=MagicMock(),
         config=MagicMock(),
-        user_path="/tmp/unused-config.yml",
         service=MagicMock(),
+        list_animals=lambda: [],
     )
     dialog._win = None
     dialog._initial_fps = initial_fps
@@ -246,9 +246,6 @@ def test_do_save_updates_initial_fps_baseline(monkeypatch):
         "neko2020.ui.config_dialog.messagebox.askyesno",
         lambda *a, **kw: True,
     )
-    monkeypatch.setattr(
-        "neko2020.ui.config_dialog._write_config", lambda *a, **kw: None
-    )
     assert dialog._do_save() is True
     assert dialog._initial_fps == 60
 
@@ -272,15 +269,14 @@ def test_open_builds_checkbox_for_bool_fields(monkeypatch):
     fake_tk = MagicMock()
     monkeypatch.setattr(config_dialog, "tk", fake_tk)
     monkeypatch.setattr(config_dialog, "ttk", MagicMock())
-    monkeypatch.setattr(config_dialog, "_get_animals", lambda: ["neko"])
     config = MagicMock()
     config.get_bool.return_value = True
     config.get_string.return_value = "x"
     dialog = ConfigDialog(
         parent=MagicMock(),
         config=config,
-        user_path="/tmp/unused-config.yml",
         service=MagicMock(),
+        list_animals=lambda: ["neko"],
     )
     dialog.open()
     config.get_bool.assert_called_once_with("wander.enabled")
@@ -291,44 +287,8 @@ def test_open_builds_checkbox_for_bool_fields(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _get_animals / _write_config / lifecycle
+# lifecycle
 # ---------------------------------------------------------------------------
-
-
-def test_get_animals_lists_random_first_and_sorted_dirs(tmp_path, monkeypatch):
-    project = tmp_path / "project"
-    (project / "resource" / "neko").mkdir(parents=True)
-    (project / "resource" / "dog").mkdir()
-    (project / "resource" / "file.txt").write_text("x")
-    user = tmp_path / "user"
-    (user / "cat").mkdir(parents=True)
-    monkeypatch.setattr(
-        config_dialog.files, "get_project_root", lambda: str(project)
-    )
-    monkeypatch.setattr(
-        config_dialog.files, "get_user_resource_dir", lambda: str(user)
-    )
-    assert config_dialog._get_animals() == ["random", "cat", "dog", "neko"]
-
-
-def test_get_animals_ignores_missing_directories(tmp_path, monkeypatch):
-    missing = str(tmp_path / "nope")
-    monkeypatch.setattr(
-        config_dialog.files, "get_project_root", lambda: missing
-    )
-    monkeypatch.setattr(
-        config_dialog.files, "get_user_resource_dir", lambda: missing
-    )
-    assert config_dialog._get_animals() == ["random"]
-
-
-def test_write_config_creates_dirs_and_backs_up_existing(tmp_path):
-    path = tmp_path / "sub" / "config.yml"
-    config_dialog._write_config(str(path), {"fps": 4})
-    assert path.read_text() == "fps: 4\n"
-    config_dialog._write_config(str(path), {"fps": 8})
-    assert path.read_text() == "fps: 8\n"
-    assert (tmp_path / "sub" / "config.yml.bak").read_text() == "fps: 4\n"
 
 
 def test_do_save_returns_false_when_collect_fails(monkeypatch):
@@ -342,9 +302,6 @@ def test_do_save_returns_false_when_collect_fails(monkeypatch):
 
 def _saved_dialog(monkeypatch):
     dialog = _make_dialog_with_vars({})
-    monkeypatch.setattr(
-        "neko2020.ui.config_dialog._write_config", lambda *a, **kw: None
-    )
     dialog._win = MagicMock()
     return dialog
 
@@ -385,3 +342,29 @@ def test_open_existing_window_lifts_and_focuses():
     dialog.open()
     win.lift.assert_called_once()
     win.focus_set.assert_called_once()
+
+
+def test_do_save_persists_collected_data_through_config_and_restarts():
+    dialog = _make_dialog_with_vars({"fps": "4"})
+    assert dialog._do_save() is True
+    saved = dialog._config.save.call_args.args[0]
+    assert saved["fps"] == 4
+    assert saved["speed"] == {"max": 60}
+    dialog._service.restart.assert_called_once()
+
+
+def test_open_offers_random_then_listed_animals(monkeypatch):
+    fake_ttk = MagicMock()
+    monkeypatch.setattr(config_dialog, "tk", MagicMock())
+    monkeypatch.setattr(config_dialog, "ttk", fake_ttk)
+    config = MagicMock()
+    config.get_string.return_value = "neko"
+    dialog = ConfigDialog(
+        parent=MagicMock(),
+        config=config,
+        service=MagicMock(),
+        list_animals=lambda: ["cat", "neko"],
+    )
+    dialog.open()
+    values = fake_ttk.Combobox.call_args.kwargs["values"]
+    assert values == ["random", "cat", "neko"]

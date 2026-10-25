@@ -107,3 +107,23 @@ def test_get_user_config_dir_respects_xdg_config_home(tmp_path, monkeypatch):
 
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     assert get_user_config_dir() == str(tmp_path / "neko2020")
+
+
+def test_list_animals_merges_and_sorts_both_dirs(tmp_path):
+    from neko2020.infrastructure.files import list_animals
+
+    project = tmp_path / "project"
+    (project / "neko").mkdir(parents=True)
+    (project / "dog").mkdir()
+    (project / "file.txt").write_text("x")
+    user = tmp_path / "user"
+    (user / "cat").mkdir(parents=True)
+    (user / "dog").mkdir()
+    assert list_animals(str(project), str(user)) == ["cat", "dog", "neko"]
+
+
+def test_list_animals_ignores_missing_directories(tmp_path):
+    from neko2020.infrastructure.files import list_animals
+
+    missing = str(tmp_path / "nope")
+    assert list_animals(missing, missing) == []

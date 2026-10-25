@@ -41,7 +41,7 @@ Frozen dataclasses:
 
 ## `application/ports.py` — Ports
 
-ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` (`get_int/get_float/get_string/reload`), `ICursorProvider` (`get_cursor_position`), `IRenderer` (`render/get_position/get_size/get_bounds`).
+ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` (`get_int/get_float/get_string/get_bool/reload/save`), `ICursorProvider` (`get_cursor_position`), `IRenderer` (`render/get_position/get_size/get_bounds`).
 
 ## `adapters/tkinter_renderer.py` — TkinterRenderer
 
@@ -54,6 +54,7 @@ ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` 
 
 ## `adapters/yaml_config.py` — YamlConfigProvider
 
+- `save(data)` writes the user config (creating the directory and a `.bak` backup)
 - `reload()` loads `config/default_config.yml` and deep-merges the user config over it (BaseLoader: scalars stay strings; typed accessors convert)
 - Dot-notation accessors: `get_int`, `get_float`, `get_string`
 
@@ -72,4 +73,4 @@ ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` 
 
 - Tray-opened Toplevel with tabbed sections (Appearance / Movement / Behavior Timing / Performance) generated from a declarative field list
 - Animal field is a read-only combobox listing bundled + user sprite sets plus `"random"`
-- Apply writes the user config (with `.bak` backup) and restarts the animation on a background thread
+- Apply saves through `IConfigProvider.save()` (the YAML adapter writes the user config with a `.bak` backup) and restarts the animation; the animal list comes from an injected `list_animals` callable

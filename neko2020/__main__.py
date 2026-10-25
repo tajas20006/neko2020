@@ -133,8 +133,8 @@ if __name__ == "__main__":
     config_dialog = ConfigDialog(
         parent=root,
         config=config,
-        user_path=user_config_path,
         service=service,
+        list_animals=files.list_animals,
     )
 
     def _on_tk_thread(callback):

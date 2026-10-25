@@ -1,13 +1,9 @@
-import os
-import shutil
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import messagebox, ttk
 
-import yaml
-
-from neko2020.application.animation_service import MIN_FPS
+from neko2020.application.animation_service import MIN_FPS, AnimationService
 from neko2020.application.ports import IConfigProvider
-from neko2020.infrastructure import files
 
 _DESCRIPTION = (
     "Adjust how your pet looks and behaves.\n"
@@ -74,23 +70,6 @@ def _all_fields():
         yield from fields
 
 
-def _get_animals() -> list[str]:
-    dirs: set[str] = set()
-    for base in (
-        os.path.join(files.get_project_root(), "resource"),
-        files.get_user_resource_dir(),
-    ):
-        try:
-            dirs.update(
-                d
-                for d in os.listdir(base)
-                if os.path.isdir(os.path.join(base, d))
-            )
-        except OSError:
-            pass
-    return ["random"] + sorted(dirs)
-
-
 def _set_nested(d: dict, path: str, value) -> None:
     keys = path.split(".")
     for key in keys[:-1]:
@@ -127,26 +106,18 @@ def _scale_for_fps(data: dict, ratio: float) -> None:
     data["speed"]["max"] = max(1, round(data["speed"]["max"] / ratio))
 
 
-def _write_config(user_path: str, data: dict) -> None:
-    os.makedirs(os.path.dirname(user_path), exist_ok=True)
-    if os.path.exists(user_path):
-        shutil.copy2(user_path, user_path + ".bak")
-    with open(user_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(data, f, default_flow_style=False)
-
-
 class ConfigDialog:
     def __init__(
         self,
         parent: tk.Tk,
         config: IConfigProvider,
-        user_path: str,
-        service,
+        service: AnimationService,
+        list_animals: Callable[[], list[str]],
     ):
         self._parent = parent
         self._config = config
-        self._user_path = user_path
         self._service = service
+        self._list_animals = list_animals
         self._win: tk.Toplevel | None = None
         self._initial_fps: int | None = None
 
@@ -161,7 +132,7 @@ class ConfigDialog:
 
         self._config.reload()
         self._initial_fps = self._config.get_int("fps")
-        animals = _get_animals()
+        animals = ["random", *self._list_animals()]
 
         win = tk.Toplevel(self._parent)
         win.title("neko2020 Config")
@@ -274,7 +245,7 @@ class ConfigDialog:
         if data is None:
             return False
         self._maybe_scale_for_fps(data)
-        _write_config(self._user_path, data)
+        self._config.save(data)
         self._service.restart()
         self._initial_fps = data.get("fps", self._initial_fps)
         return True
