@@ -1,5 +1,6 @@
 import pytest
 
+from neko2020.domain.settings import BehaviorSettings
 from neko2020.domain.state_machine import NekoStateMachine, State
 from neko2020.domain.value_objects import Point, Rect, Size
 
@@ -23,7 +24,7 @@ def make_sm(**overrides):
         frame_hold=1,
     )
     defaults.update(overrides)
-    return NekoStateMachine(**defaults)
+    return NekoStateMachine(BehaviorSettings(**defaults))
 
 
 def tick_n(sm, n, cursor, position=CENTER):

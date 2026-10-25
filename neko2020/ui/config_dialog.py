@@ -2,8 +2,9 @@ import tkinter as tk
 from collections.abc import Callable
 from tkinter import messagebox, ttk
 
-from neko2020.application.animation_service import MIN_FPS, AnimationService
+from neko2020.application.animation_service import AnimationService
 from neko2020.application.ports import IConfigProvider
+from neko2020.application.settings import MIN_FPS
 
 _DESCRIPTION = (
     "Adjust how your pet looks and behaves.\n"

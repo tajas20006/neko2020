@@ -6,17 +6,15 @@ from neko2020.application.ports import (
     ICursorProvider,
     IRenderer,
 )
+from neko2020.application.settings import AppSettings
 from neko2020.domain.state_machine import NekoStateMachine
 from neko2020.domain.value_objects import Point, Rect
 
 
-type SessionFactory = Callable[[], tuple[NekoStateMachine, IRenderer]]
+type SessionFactory = Callable[
+    [AppSettings], tuple[NekoStateMachine, IRenderer]
+]
 type Scheduler = Callable[[int, Callable[[], None]], None]
-
-# A floor only, to avoid a ZeroDivisionError from a zero/negative fps
-# in a hand-edited config.yml. Walk-cycle flicker at high fps is
-# controlled separately via frame_hold.
-MIN_FPS = 1
 
 
 class AnimationService:
@@ -33,6 +31,7 @@ class AnimationService:
         self._session_factory = session_factory
         self._scheduler = scheduler
         self._monitors = monitors
+        self._settings: AppSettings | None = None
         self._state_machine: NekoStateMachine | None = None
         self._renderer: IRenderer | None = None
         self._stopped = True
@@ -41,8 +40,7 @@ class AnimationService:
         self._generation = 0
 
     def _delay_ms(self) -> int:
-        fps = max(MIN_FPS, self._config.get_int("fps"))
-        return 1000 // fps
+        return 1000 // self._settings.fps
 
     def _monitor_for(self, cursor: Point) -> Rect:
         for m in self._monitors:
@@ -56,7 +54,10 @@ class AnimationService:
         self._stopped = False
         self._generation += 1
         self._config.reload()
-        self._state_machine, self._renderer = self._session_factory()
+        self._settings = AppSettings.from_config(self._config)
+        self._state_machine, self._renderer = self._session_factory(
+            self._settings
+        )
         self._tick(self._generation)
 
     def stop(self) -> None:

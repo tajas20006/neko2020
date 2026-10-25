@@ -2,7 +2,7 @@ import os
 import tkinter as tk
 
 from neko2020.adapters.sprite_map import sprite_name
-from neko2020.application.ports import IConfigProvider, IRenderer
+from neko2020.application.ports import IRenderer
 from neko2020.domain.state_machine import State
 from neko2020.domain.value_objects import Point, Rect, Size
 from neko2020.infrastructure import files, image_loader
@@ -12,7 +12,7 @@ class TkinterRenderer(IRenderer):
     def __init__(
         self,
         canvas,
-        config: IConfigProvider,
+        animal: str,
         vx: int,
         vy: int,
         initial_position: Point,
@@ -27,7 +27,7 @@ class TkinterRenderer(IRenderer):
             vx, vy, vx + canvas.winfo_width(), vy + canvas.winfo_height()
         )
 
-        pet_type = config.get_string("animal")
+        pet_type = animal
         user_resource_base = files.get_user_resource_dir()
         if pet_type == "random":
             pet_type = files.select_random_directory_merged(

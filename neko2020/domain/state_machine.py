@@ -3,6 +3,7 @@ import random
 from dataclasses import dataclass
 from enum import Enum, auto
 
+from neko2020.domain.settings import BehaviorSettings
 from neko2020.domain.value_objects import Point, Rect, Size
 
 # sector borders when the circle is divided into 8 directions
@@ -58,35 +59,8 @@ class TickResult:
 
 
 class NekoStateMachine:
-    def __init__(
-        self,
-        *,
-        stop_time: int,
-        wash_time: int,
-        scratch_time: int,
-        yawn_time: int,
-        awake_time: int,
-        claw_time: int,
-        awake_rand: int,
-        max_speed: int,
-        idle_space: int,
-        offset: Point,
-        frame_hold: int,
-        wander_enabled: bool = False,
-        wander_time: int = 100,
-        wander_rand: int = 100,
-    ):
-        self.STOP_TIME = stop_time
-        self.WASH_TIME = wash_time
-        self.SCRATCH_TIME = scratch_time
-        self.YAWN_TIME = yawn_time
-        self.AWAKE_TIME = awake_time
-        self.CLAW_TIME = claw_time
-        self.AWK_RND = awake_rand
-        self.frame_hold = max(1, frame_hold)
-        self.wander_enabled = wander_enabled
-        self.WANDER_TIME = wander_time
-        self.WANDER_RND = wander_rand
+    def __init__(self, settings: BehaviorSettings):
+        self.settings = settings
 
         self.dx = 0
         self.dy = 0
@@ -94,11 +68,6 @@ class NekoStateMachine:
         self.to_y = 0
         self.old_x = 0
         self.old_y = 0
-        self.offset = offset
-        self.max_speed = max_speed
-
-        self.idle_space = idle_space
-        self.action_count = 0
         self.tick_count = 0
         self.state_count = 0
         self.sub_tick = 0
@@ -107,10 +76,10 @@ class NekoStateMachine:
 
     def _move_start(self):
         return (
-            self.old_x < self.to_x - self.idle_space
-            or self.old_x > self.to_x + self.idle_space
-            or self.old_y < self.to_y - self.idle_space
-            or self.old_y > self.to_y + self.idle_space
+            self.old_x < self.to_x - self.settings.idle_space
+            or self.old_x > self.to_x + self.settings.idle_space
+            or self.old_y < self.to_y - self.settings.idle_space
+            or self.old_y > self.to_y + self.settings.idle_space
         )
 
     def _calc_direction(self):
@@ -181,23 +150,23 @@ class NekoStateMachine:
         elif target_x >= bounds.right - half_cx:
             dx = bounds.right - half_cx - position.x
         else:
-            dx = target_x - position.x + self.offset.x
+            dx = target_x - position.x + self.settings.offset.x
         if target_y <= bounds.top + half_cy:
             dy = bounds.top + half_cy - position.y
         elif target_y >= bounds.bottom - half_cy:
             dy = bounds.bottom - half_cy - position.y
         else:
-            dy = target_y - position.y + self.offset.y
+            dy = target_y - position.y + self.settings.offset.y
         double_length = dx * dx + dy * dy
 
         if double_length != 0:
             length = math.sqrt(double_length)
-            if length <= self.max_speed:
+            if length <= self.settings.max_speed:
                 self.dx = dx
                 self.dy = dy
             else:
-                self.dx = int(self.max_speed * dx / length)
-                self.dy = int(self.max_speed * dy / length)
+                self.dx = int(self.settings.max_speed * dx / length)
+                self.dy = int(self.settings.max_speed * dy / length)
         else:
             self.dx = 0
             self.dy = 0
@@ -205,7 +174,7 @@ class NekoStateMachine:
         # The image only advances once every `frame_hold` ticks, so a high
         # fps does not make the sprite swap faster.
         self.sub_tick += 1
-        if self.sub_tick >= self.frame_hold:
+        if self.sub_tick >= max(1, self.settings.frame_hold):
             self.sub_tick = 0
             self.tick_count = (self.tick_count + 1) % 4
             if self.tick_count % 2 == 0:
@@ -217,7 +186,7 @@ class NekoStateMachine:
         if self.state == State.STOP:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
-            elif self.state_count >= self.STOP_TIME:
+            elif self.state_count >= self.settings.stop_time:
                 half_cx = size.cx // 2
                 half_cy = size.cy // 2
                 if position.x <= bounds.left + half_cx:
@@ -233,29 +202,30 @@ class NekoStateMachine:
         elif self.state == State.WASH:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
-            elif self.state_count >= self.WASH_TIME:
+            elif self.state_count >= self.settings.wash_time:
                 self._set_new_state(State.SCRATCH)
         elif self.state == State.SCRATCH:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
-            elif self.state_count >= self.SCRATCH_TIME:
+            elif self.state_count >= self.settings.scratch_time:
                 self._set_new_state(State.YAWN)
         elif self.state == State.YAWN:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
-            elif self.state_count >= self.YAWN_TIME:
+            elif self.state_count >= self.settings.yawn_time:
                 self._set_new_state(State.SLEEP)
         elif self.state == State.SLEEP:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
-            elif self.wander_enabled and self.state_count >= (
-                self.WANDER_TIME + int(random.random() * self.WANDER_RND)
+            elif self.settings.wander_enabled and self.state_count >= (
+                self.settings.wander_time
+                + int(random.random() * self.settings.wander_rand)
             ):
                 self.wander_target = self._pick_wander_target(size, bounds)
                 self._set_new_state(State.AWAKE)
         elif self.state == State.AWAKE:
-            if self.state_count >= self.AWAKE_TIME + int(
-                random.random() * self.AWK_RND
+            if self.state_count >= self.settings.awake_time + int(
+                random.random() * self.settings.awake_rand
             ):
                 self._calc_direction()
         elif self.state in _MOVE_STATES:
@@ -299,7 +269,7 @@ class NekoStateMachine:
         }:
             if self._move_start():
                 self._set_new_state(State.AWAKE)
-            elif self.state_count >= self.CLAW_TIME:
+            elif self.state_count >= self.settings.claw_time:
                 self._set_new_state(State.SCRATCH)
         else:
             self._set_new_state(State.STOP)

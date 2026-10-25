@@ -13,12 +13,6 @@ def _make_canvas(w=800, h=600):
     return canvas
 
 
-def _make_config(animal="neko"):
-    config = MagicMock()
-    config.get_string.return_value = animal
-    return config
-
-
 def _make_renderer(
     animal="neko",
     vx=0,
@@ -28,7 +22,6 @@ def _make_renderer(
     initial=Point(100, 100),
 ):
     canvas = _make_canvas(canvas_w, canvas_h)
-    config = _make_config(animal)
     mock_images = {name: MagicMock() for name in ICON_NAMES}
 
     with (
@@ -41,7 +34,7 @@ def _make_renderer(
             return_value=None,
         ),
     ):
-        renderer = TkinterRenderer(canvas, config, vx, vy, initial)
+        renderer = TkinterRenderer(canvas, animal, vx, vy, initial)
 
     return renderer, canvas, mock_images
 
@@ -145,7 +138,6 @@ def test_render_redraws_when_position_changes():
 
 def test_random_animal_calls_select_random_directory_merged():
     canvas = _make_canvas()
-    config = _make_config("random")
     mock_images = {name: MagicMock() for name in ICON_NAMES}
 
     with (
@@ -162,14 +154,13 @@ def test_random_animal_calls_select_random_directory_merged():
             return_value="neko",
         ) as mock_rand,
     ):
-        TkinterRenderer(canvas, config, 0, 0, Point(0, 0))
+        TkinterRenderer(canvas, "random", 0, 0, Point(0, 0))
 
     mock_rand.assert_called_once()
 
 
 def test_non_random_animal_does_not_call_select_random_directory_merged():
     canvas = _make_canvas()
-    config = _make_config("neko")
     mock_images = {name: MagicMock() for name in ICON_NAMES}
 
     with (
@@ -185,7 +176,7 @@ def test_non_random_animal_does_not_call_select_random_directory_merged():
             "neko2020.adapters.tkinter_renderer.files.select_random_directory_merged",
         ) as mock_rand,
     ):
-        TkinterRenderer(canvas, config, 0, 0, Point(0, 0))
+        TkinterRenderer(canvas, "neko", 0, 0, Point(0, 0))
 
     mock_rand.assert_not_called()
 

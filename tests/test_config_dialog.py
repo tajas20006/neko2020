@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from neko2020.application.animation_service import MIN_FPS
+from neko2020.application.settings import MIN_FPS
 from neko2020.ui import config_dialog
 from neko2020.ui.config_dialog import (
     ConfigDialog,

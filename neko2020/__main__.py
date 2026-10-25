@@ -9,30 +9,10 @@ from neko2020.adapters.tkinter_cursor import TkinterCursorProvider
 from neko2020.adapters.tkinter_renderer import TkinterRenderer
 from neko2020.adapters.yaml_config import YamlConfigProvider
 from neko2020.application.animation_service import AnimationService
-from neko2020.application.ports import IConfigProvider
+from neko2020.application.settings import AppSettings
 from neko2020.domain.state_machine import NekoStateMachine
-from neko2020.domain.value_objects import Point
 from neko2020.infrastructure import files
 from neko2020.ui.config_dialog import ConfigDialog
-
-
-def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
-    return NekoStateMachine(
-        stop_time=config.get_int("duration.stop"),
-        wash_time=config.get_int("duration.wash"),
-        scratch_time=config.get_int("duration.scratch"),
-        yawn_time=config.get_int("duration.yawn"),
-        awake_time=config.get_int("duration.awake"),
-        claw_time=config.get_int("duration.claw"),
-        awake_rand=config.get_int("duration.awake_rand"),
-        max_speed=config.get_int("speed.max"),
-        idle_space=config.get_int("idle_space"),
-        offset=Point(config.get_int("offset.x"), config.get_int("offset.y")),
-        frame_hold=config.get_int("frame_hold"),
-        wander_enabled=config.get_bool("wander.enabled"),
-        wander_time=config.get_int("wander.sleep_time"),
-        wander_rand=config.get_int("wander.rand"),
-    )
 
 
 def _create_overlay(screen):
@@ -74,15 +54,14 @@ def main() -> None:
 
     cursor_provider = TkinterCursorProvider(root)
 
-    def session_factory():
+    def session_factory(settings: AppSettings):
         # Start the pet at the cursor's current screen position so it
         # appears on whichever monitor the user is already using.
         initial_pos = cursor_provider.get_cursor_position()
         renderer = TkinterRenderer(
-            canvas, config, screen.left, screen.top, initial_pos
+            canvas, settings.animal, screen.left, screen.top, initial_pos
         )
-        state_machine = _build_state_machine(config)
-        return state_machine, renderer
+        return NekoStateMachine(settings.behavior), renderer
 
     def scheduler(delay_ms, callback):
         root.after(delay_ms, callback)

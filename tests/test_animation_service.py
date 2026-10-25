@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
-from neko2020.application.animation_service import MIN_FPS, AnimationService
+from neko2020.application.animation_service import AnimationService
+from neko2020.application.settings import MIN_FPS
 from neko2020.domain.state_machine import State
 from neko2020.domain.value_objects import Point, Rect, Size
 
@@ -33,7 +34,7 @@ def _make_service(monitors=None, fps=4, cursor_pos=None):
     def scheduler(delay_ms, fn):
         scheduled.append((delay_ms, fn))
 
-    def factory():
+    def factory(settings):
         return sm, renderer
 
     svc = AnimationService(
@@ -133,21 +134,25 @@ def test_stop_is_idempotent():
 
 def test_delay_ms_at_4fps():
     svc, *_ = _make_service(fps=4)
+    svc.start()
     assert svc._delay_ms() == 250
 
 
 def test_delay_ms_at_10fps():
     svc, *_ = _make_service(fps=10)
+    svc.start()
     assert svc._delay_ms() == 100
 
 
 def test_delay_ms_at_60fps_is_unclamped():
     svc, *_ = _make_service(fps=60)
+    svc.start()
     assert svc._delay_ms() == 1000 // 60
 
 
 def test_delay_ms_clamps_fps_below_min():
     svc, *_ = _make_service(fps=0)
+    svc.start()
     assert svc._delay_ms() == 1000 // MIN_FPS
 
 

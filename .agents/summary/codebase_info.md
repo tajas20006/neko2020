@@ -24,8 +24,8 @@ Desktop pet (oneko-style) for Windows implemented in Python. A transparent overl
 neko2020/
 ├── neko2020/            # Main source package (clean-architecture layers)
 │   ├── __main__.py      # Composition root: window, tray, wiring
-│   ├── domain/          # state_machine.py, value_objects.py (pure logic)
-│   ├── application/     # animation_service.py, ports.py (ABCs)
+│   ├── domain/          # state_machine.py, settings.py, value_objects.py (pure logic)
+│   ├── application/     # animation_service.py, ports.py (ABCs), settings.py
 │   ├── adapters/        # tkinter_renderer.py, tkinter_cursor.py, win32_overlay.py,
 │   │                    #   yaml_config.py
 │   ├── infrastructure/  # files.py, image_loader.py

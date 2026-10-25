@@ -11,12 +11,15 @@ neko2020/
 │   │                      #   tray menu, wiring of all layers
 │   ├── domain/            # Pure logic, no I/O
 │   │   ├── state_machine.py  # NekoStateMachine — 18-state behavior logic
+│   │   ├── settings.py       # BehaviorSettings (typed tunables)
 │   │   └── value_objects.py  # Point, Size, Rect frozen dataclasses
 │   ├── application/
 │   │   ├── animation_service.py  # Tick loop, start/stop/restart,
 │   │   │                         #   per-monitor bounds selection
-│   │   └── ports.py              # IConfigProvider, ICursorProvider,
-│   │                             #   IRenderer ABCs
+│   │   ├── ports.py              # IConfigProvider, ICursorProvider,
+│   │   │                         #   IRenderer ABCs
+│   │   └── settings.py           # AppSettings.from_config (typed,
+│   │                             #   validated config keys; MIN_FPS)
 │   ├── adapters/          # Port implementations
 │   │   ├── tkinter_renderer.py   # Canvas drawing + sprite loading
 │   │   ├── tkinter_cursor.py     # Cursor position via Tk

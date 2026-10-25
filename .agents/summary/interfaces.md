@@ -30,9 +30,9 @@ Implementations live in `adapters/` (`YamlConfigProvider`, `TkinterCursorProvide
 ## Domain API (`domain/state_machine.py`)
 
 ```python
-NekoStateMachine(*, stop_time, wash_time, scratch_time, yawn_time,
-                 awake_time, claw_time, awake_rand,
-                 max_speed, idle_space, offset: Point)
+NekoStateMachine(settings: BehaviorSettings)  # domain/settings.py
+AppSettings.from_config(config)  # application/settings.py: fps, animal,
+                                 # behavior; the only place that knows keys
 
 NekoStateMachine.tick(
     cursor: Point,      # current cursor position

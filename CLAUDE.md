@@ -46,8 +46,8 @@ The animation loop runs on Tkinter's `after()` scheduler (not a separate thread)
 **Layers** (dependencies point inward only):
 
 ```
-domain/         # Pure logic, no I/O: state_machine.py, value_objects.py
-application/    # Orchestration: animation_service.py, ports.py (ABCs)
+domain/         # Pure logic, no I/O: state_machine.py, settings.py, value_objects.py
+application/    # Orchestration: animation_service.py, ports.py (ABCs), settings.py
 adapters/       # Port implementations: tkinter_renderer.py,
                 #   tkinter_cursor.py, win32_overlay.py, yaml_config.py
 infrastructure/ # Filesystem/resources: files.py, image_loader.py
