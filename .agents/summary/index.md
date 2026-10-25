@@ -20,7 +20,7 @@ Load this file first. Each entry below summarizes a documentation file so you ca
 | [data_models.md](data_models.md) | State enum, frame index map, TickResult, geometric types |
 | [workflows.md](workflows.md) | Startup sequence, per-tick flow, idle transitions, config-change flow, dev/build commands, adding animals |
 | [dependencies.md](dependencies.md) | All runtime/optional/dev dependencies and platform constraints |
-| [review_notes.md](review_notes.md) | Known gaps (unused `speed.min`, untested UI), platform limitations, cleanup candidates |
+| [review_notes.md](review_notes.md) | Known gaps (untested UI), platform limitations, cleanup candidates |
 
 ## Quick Reference
 

@@ -4,7 +4,6 @@ import pytest
 from neko2020.infrastructure.files import (
     get_project_root,
     get_user_resource_dir,
-    select_random_directory,
     select_random_directory_merged,
 )
 
@@ -41,32 +40,6 @@ def test_get_user_resource_dir_respects_xdg_config_home(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     result = get_user_resource_dir()
     assert result == str(tmp_path / "neko2020" / "resources")
-
-
-# ---------------------------------------------------------------------------
-# select_random_directory
-# ---------------------------------------------------------------------------
-
-
-def test_select_random_directory_returns_a_directory_name(tmp_path):
-    (tmp_path / "dir_a").mkdir()
-    (tmp_path / "dir_b").mkdir()
-    result = select_random_directory(str(tmp_path))
-    assert result in {"dir_a", "dir_b"}
-
-
-def test_select_random_directory_ignores_files(tmp_path):
-    (tmp_path / "only_dir").mkdir()
-    (tmp_path / "file.txt").write_text("x")
-    result = select_random_directory(str(tmp_path))
-    assert result == "only_dir"
-
-
-def test_select_random_directory_returns_name_not_full_path(tmp_path):
-    (tmp_path / "mydir").mkdir()
-    result = select_random_directory(str(tmp_path))
-    assert result == "mydir"
-    assert os.path.sep not in result
 
 
 # ---------------------------------------------------------------------------

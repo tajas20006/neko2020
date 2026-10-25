@@ -18,14 +18,6 @@ def get_user_resource_dir():
     return os.path.join(get_user_config_dir(), "resources")
 
 
-def select_random_directory(basedir):
-    entries = os.listdir(basedir)
-    directories = [
-        f for f in entries if os.path.isdir(os.path.join(basedir, f))
-    ]
-    return random.choice(directories)
-
-
 def select_random_directory_merged(project_basedir, user_basedir):
     dirs = set()
     if os.path.isdir(project_basedir):

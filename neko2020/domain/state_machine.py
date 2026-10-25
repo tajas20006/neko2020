@@ -66,7 +66,6 @@ class NekoStateMachine:
         awake_time: int,
         claw_time: int,
         awake_rand: int,
-        min_speed: int,
         max_speed: int,
         idle_space: int,
         offset: Point,
@@ -115,7 +114,6 @@ class NekoStateMachine:
         self.old_x = 0
         self.old_y = 0
         self.offset = offset
-        self.min_speed = min_speed
         self.max_speed = max_speed
 
         self.idle_space = idle_space

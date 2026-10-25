@@ -30,7 +30,7 @@ Implementations live in `adapters/` (`YamlConfigProvider`, `TkinterCursorProvide
 
 ```python
 NekoStateMachine(*, stop_time, wash_time, scratch_time, yawn_time,
-                 awake_time, claw_time, awake_rand, min_speed,
+                 awake_time, claw_time, awake_rand,
                  max_speed, idle_space, offset: Point)
 
 NekoStateMachine.tick(
@@ -59,7 +59,6 @@ service.restart()  # stop, wait, start — reloads config and sprites
 ```yaml
 speed:
   max: 60
-  min: 2
 offset:
   x: 0
   y: -35

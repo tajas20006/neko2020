@@ -51,15 +51,15 @@ def test_parse_int_field_high_value_with_no_max_is_valid():
 
 
 def test_scale_for_fps_scales_hold_up_and_speeds_down_together():
-    data = {"frame_hold": 1, "speed": {"max": 60, "min": 6}}
+    data = {"frame_hold": 1, "speed": {"max": 60}}
     _scale_for_fps(data, 3.0)
-    assert data == {"frame_hold": 3, "speed": {"max": 20, "min": 2}}
+    assert data == {"frame_hold": 3, "speed": {"max": 20}}
 
 
 def test_scale_for_fps_floors_at_one():
-    data = {"frame_hold": 3, "speed": {"max": 2, "min": 1}}
+    data = {"frame_hold": 3, "speed": {"max": 2}}
     _scale_for_fps(data, 10.0)
-    assert data == {"frame_hold": 30, "speed": {"max": 1, "min": 1}}
+    assert data == {"frame_hold": 30, "speed": {"max": 1}}
     _scale_for_fps(data, 0.01)
     assert data["frame_hold"] == 1
 
@@ -109,7 +109,6 @@ def _make_dialog_with_vars(overrides: dict[str, str | bool], initial_fps=4):
     defaults = {
         "animal": "neko",
         "speed.max": "60",
-        "speed.min": "2",
         "offset.x": "0",
         "offset.y": "-35",
         "idle_space": "10",
@@ -198,7 +197,7 @@ def test_maybe_scale_timing_scales_when_user_confirms(monkeypatch):
     data = dialog._collect()
     dialog._maybe_scale_for_fps(data)
     assert data["frame_hold"] == 3
-    assert data["speed"] == {"max": 20, "min": 1}
+    assert data["speed"] == {"max": 20}
     assert data["duration"]["stop"] == 4
     assert dialog._vars["frame_hold"].get() == "3"
     assert dialog._vars["speed.max"].get() == "20"

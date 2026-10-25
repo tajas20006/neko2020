@@ -58,7 +58,7 @@ After loading and deep-merging YAMLs (`adapters/yaml_config.py`, BaseLoader — 
 
 ```python
 {
-    "speed": {"max": 60, "min": 2},
+    "speed": {"max": 60},
     "offset": {"x": 0, "y": -35},
     "duration": {"stop": 4, "wash": 10, "scratch": 4, "yawn": 3,
                  "awake": 3, "claw": 10, "awake_rand": 20},

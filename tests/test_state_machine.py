@@ -17,7 +17,6 @@ def make_sm(**overrides):
         awake_time=3,
         claw_time=10,
         awake_rand=0,
-        min_speed=2,
         max_speed=60,
         idle_space=10,
         offset=Point(0, 0),

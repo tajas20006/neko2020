@@ -7,9 +7,6 @@ description: Known gaps, platform limitations, and cleanup candidates
 
 ## Completeness Gaps
 
-### `speed.min` is unused
-`NekoStateMachine` stores `min_speed` and the config dialog exposes "Min Speed", but nothing reads it — only `speed.max` affects movement. Either implement a behavior for it or remove it from the config, dialog, and constructor.
-
 ### Windows-only — no cross-platform path
 The project description historically said "Cross-Platform," but the overlay setup uses Win32-specific ctypes calls (monitor enumeration, window styles, `SetWindowPos`) with no Linux/macOS code path. `pystray` and the ports-and-adapters structure would support adding one.
 
@@ -25,6 +22,5 @@ The ordered list of 32 icon names lives in `infrastructure/image_loader.py`; the
 
 ## Recommendations
 
-1. Resolve `speed.min` (implement or remove)
-2. Consider extracting the movement math from `NekoStateMachine.tick()` into a dedicated domain helper to shrink the 140-line method and ease testing
-3. If cross-platform support is ever wanted, add a platform adapter for the overlay window alongside the existing Tkinter adapters
+1. Consider extracting the movement math from `NekoStateMachine.tick()` into a dedicated domain helper to shrink the 140-line method and ease testing
+2. If cross-platform support is ever wanted, add a platform adapter for the overlay window alongside the existing Tkinter adapters

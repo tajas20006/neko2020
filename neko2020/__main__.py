@@ -69,7 +69,6 @@ def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
         awake_time=config.get_int("duration.awake"),
         claw_time=config.get_int("duration.claw"),
         awake_rand=config.get_int("duration.awake_rand"),
-        min_speed=config.get_int("speed.min"),
         max_speed=config.get_int("speed.max"),
         idle_space=config.get_int("idle_space"),
         offset=Point(config.get_int("offset.x"), config.get_int("offset.y")),

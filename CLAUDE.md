@@ -72,7 +72,7 @@ AnimationService._tick()
 
 ## Configuration
 
-User config at `~/.config/neko2020/config.yml` (respects `XDG_CONFIG_HOME`) deep-merges over `config/default_config.yml`. Key values: `speed.max`, `speed.min`, `fps` (frames per second; tick delay is `1000 // fps` ms), `animal` (subdirectory name under `resource/`, or `"random"`), timing values under `duration.*`, `offset.x`/`offset.y`, `idle_space`. Users normally edit settings through the tray's **Config** dialog (`ui/config_dialog.py`), which writes the user config and restarts the animation.
+User config at `~/.config/neko2020/config.yml` (respects `XDG_CONFIG_HOME`) deep-merges over `config/default_config.yml`. Key values: `speed.max`, `fps` (frames per second; tick delay is `1000 // fps` ms), `animal` (subdirectory name under `resource/`, or `"random"`), timing values under `duration.*`, `offset.x`/`offset.y`, `idle_space`. Users normally edit settings through the tray's **Config** dialog (`ui/config_dialog.py`), which writes the user config and restarts the animation.
 
 ## Adding a New Animal
 
