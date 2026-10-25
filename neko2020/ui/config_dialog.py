@@ -49,6 +49,16 @@ _SECTIONS: list[tuple[str, str, list[tuple[str, str, type, int | None]]]] = [
         ],
     ),
     (
+        "Wandering",
+        "Let a sleeping pet occasionally wake up and walk to a random "
+        "spot instead of sleeping forever.",
+        [
+            ("wander.enabled", "Enable Wandering", bool, None),
+            ("wander.sleep_time", "Sleep Before Wander", int, None),
+            ("wander.rand", "Wander Variance", int, None),
+        ],
+    ),
+    (
         "Performance",
         "Lower FPS reduces CPU usage; higher makes motion smoother.\n"
         "Frame Hold is how many ticks pass before the sprite image "
@@ -195,10 +205,17 @@ class ConfigDialog:
                 font=("TkDefaultFont", 8),
             ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
 
-            for i, (path, label, _typ, _min_val) in enumerate(fields, start=1):
+            for i, (path, label, typ, _min_val) in enumerate(fields, start=1):
                 tk.Label(tab, text=label + ":", anchor="w", width=22).grid(
                     row=i, column=0, sticky="w", pady=2
                 )
+                if typ is bool:
+                    bool_var = tk.BooleanVar(value=self._config.get_bool(path))
+                    self._vars[path] = bool_var
+                    tk.Checkbutton(tab, variable=bool_var).grid(
+                        row=i, column=1, sticky="w", pady=2, padx=(8, 0)
+                    )
+                    continue
                 value = self._config.get_string(path)
                 var = tk.StringVar(value=value)
                 self._vars[path] = var
@@ -239,7 +256,10 @@ class ConfigDialog:
     def _collect(self) -> dict | None:
         data: dict = {}
         for path, label, typ, min_val in _all_fields():
-            raw = self._vars[path].get().strip()
+            if typ is bool:
+                _set_nested(data, path, bool(self._vars[path].get()))
+                continue
+            raw = str(self._vars[path].get()).strip()
             if typ is int:
                 val, error = _parse_int_field(raw, label, min_val)
                 if error is not None:
