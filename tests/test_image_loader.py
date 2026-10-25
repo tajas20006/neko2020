@@ -82,6 +82,7 @@ def _mock_img(w=32, h=32):
     img.width = w
     img.height = h
     img.resize.return_value = img
+    img.__enter__.return_value = img
     return img
 
 

@@ -1,5 +1,6 @@
 import pytest
 
+from neko2020.domain.settings import BehaviorSettings
 from neko2020.domain.state_machine import NekoStateMachine, State
 from neko2020.domain.value_objects import Point, Rect, Size
 
@@ -17,14 +18,13 @@ def make_sm(**overrides):
         awake_time=3,
         claw_time=10,
         awake_rand=0,
-        min_speed=2,
         max_speed=60,
         idle_space=10,
         offset=Point(0, 0),
         frame_hold=1,
     )
     defaults.update(overrides)
-    return NekoStateMachine(**defaults)
+    return NekoStateMachine(BehaviorSettings(**defaults))
 
 
 def tick_n(sm, n, cursor, position=CENTER):
@@ -296,27 +296,27 @@ def test_movement_stops_when_pet_reaches_cursor():
 # ---------------------------------------------------------------------------
 
 
-def test_frame_index_on_transition_tick_is_first_frame():
+def test_phase_on_transition_tick_is_first_phase():
     sm = make_sm(awake_time=1, awake_rand=0)
     # tick 3 is the AWAKE→R_MOVE transition; _set_new_state resets tick_count=0
     r = tick_n(sm, 3, Point(1100, 540))
-    assert r.frame_index == 5  # animation[R_MOVE][0]
+    assert (r.state, r.phase) == (State.R_MOVE, 0)
 
 
-def test_frame_index_alternates_in_move_state():
+def test_phase_advances_in_move_state():
     sm = make_sm(awake_time=1, awake_rand=0)
     tick_n(sm, 3, Point(1100, 540))  # → R_MOVE, tick_count=0
     r4 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)
     r5 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)
-    assert r4.frame_index == 6  # animation[R_MOVE][1]
-    assert r5.frame_index == 5  # animation[R_MOVE][2], cycles back
+    assert (r4.state, r4.phase) == (State.R_MOVE, 1)
+    assert (r5.state, r5.phase) == (State.R_MOVE, 2)
 
 
-def test_frame_index_for_stop_state_is_constant():
+def test_result_reports_stop_state():
     sm = make_sm()
     # cursor at (0,0) stays in STOP (no cursor jump from initial to_x=0)
     result = sm.tick(Point(0, 0), CENTER, SIZE, BOUNDS)
-    assert result.frame_index == 28  # animation[STOP] = [28, 28, 28, 28]
+    assert result.state == State.STOP
 
 
 # ---------------------------------------------------------------------------
@@ -328,8 +328,7 @@ def test_frame_hold_holds_each_walk_frame_for_n_ticks():
     sm = make_sm(awake_time=1, awake_rand=0, frame_hold=2)
     tick_n(sm, 4, Point(1100, 540))  # → R_MOVE, sub_tick=0
     frames = [
-        sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS).frame_index
-        for _ in range(4)
+        sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS).phase for _ in range(4)
     ]
     assert frames[0] == frames[1]
     assert frames[2] == frames[3]
@@ -341,7 +340,7 @@ def test_frame_hold_of_one_alternates_every_tick():
     tick_n(sm, 3, Point(1100, 540))
     r1 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)
     r2 = sm.tick(Point(1100, 540), CENTER, SIZE, BOUNDS)
-    assert r1.frame_index != r2.frame_index
+    assert r1.phase != r2.phase
 
 
 def test_frame_hold_also_slows_idle_animation():
@@ -352,9 +351,7 @@ def test_frame_hold_also_slows_idle_animation():
         if sm.state == State.WASH:
             break
     assert sm.state == State.WASH
-    wash = [
-        sm.tick(cursor, CENTER, SIZE, BOUNDS).frame_index for _ in range(12)
-    ]
+    wash = [sm.tick(cursor, CENTER, SIZE, BOUNDS).phase for _ in range(12)]
     changes = sum(a != b for a, b in zip(wash, wash[1:]))
     assert changes <= 4  # would be 11 with frame_hold=1
 

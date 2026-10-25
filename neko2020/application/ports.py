@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from neko2020.domain.state_machine import State
 from neko2020.domain.value_objects import Point, Rect, Size
 
 
@@ -19,6 +20,10 @@ class IConfigProvider(ABC):
     @abstractmethod
     def reload(self) -> None: ...
 
+    @abstractmethod
+    def save(self, data: dict) -> None:
+        """Persist `data` as the user's settings, replacing the old ones."""
+
 
 class ICursorProvider(ABC):
     @abstractmethod
@@ -27,7 +32,7 @@ class ICursorProvider(ABC):
 
 class IRenderer(ABC):
     @abstractmethod
-    def render(self, frame_index: int, x: int, y: int) -> None: ...
+    def render(self, state: State, phase: int, x: int, y: int) -> None: ...
 
     @abstractmethod
     def get_position(self) -> Point: ...

@@ -46,7 +46,7 @@ Key configuration options:
 
 - ``animal`` — name of any subdirectory under ``resource/``, or ``"random"``
   to pick a different sprite set each run.
-- ``speed.max`` / ``speed.min`` — pixels per frame the pet can travel.
+- ``speed.max`` — pixels per frame the pet can travel.
 - ``fps`` — animation frame rate (frames per second).
 - ``duration.*`` — number of animation cycles spent in each idle action.
 - ``offset.x`` / ``offset.y`` — pixel offset of the sprite relative to the

@@ -1,4 +1,5 @@
 import os
+import shutil
 from copy import deepcopy
 from functools import reduce
 
@@ -26,13 +27,20 @@ class YamlConfigProvider(IConfigProvider):
         self._config: dict = {}
 
     def reload(self) -> None:
-        with open(self._default_path) as f:
-            config = yaml.load(f, Loader=yaml.BaseLoader)
+        with open(self._default_path, encoding="utf-8") as f:
+            config = yaml.load(f, Loader=yaml.BaseLoader) or {}
         if os.path.exists(self._user_path):
-            with open(self._user_path) as f:
-                user_config = yaml.load(f, Loader=yaml.BaseLoader)
+            with open(self._user_path, encoding="utf-8") as f:
+                user_config = yaml.load(f, Loader=yaml.BaseLoader) or {}
             config = _deep_merge(config, user_config)
         self._config = config
+
+    def save(self, data: dict) -> None:
+        os.makedirs(os.path.dirname(self._user_path), exist_ok=True)
+        if os.path.exists(self._user_path):
+            shutil.copy2(self._user_path, self._user_path + ".bak")
+        with open(self._user_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(data, f, default_flow_style=False)
 
     def _get_value(self, config_path):
         node = self._config

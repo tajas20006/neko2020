@@ -58,7 +58,7 @@ root.wm_attributes("-transparentcolor", "green")
 
 1. Query cursor position via `ICursorProvider`
 2. Call `NekoStateMachine.tick(cursor, position, size, bounds)` — `bounds` is the monitor currently containing the cursor
-3. Call `IRenderer.render(frame_index, x, y)` to redraw the sprite
+3. Call `IRenderer.render(state, phase, x, y)` to redraw the sprite
 4. Re-arm the scheduler
 
 `start()`/`stop()`/`restart()` recreate the state machine and renderer through a session factory, so restarts pick up config changes. While stopped, an idle pump keeps the Tk loop alive.

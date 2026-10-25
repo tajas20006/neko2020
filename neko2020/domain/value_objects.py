@@ -1,19 +1,19 @@
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Point:
     x: int
     y: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Size:
     cx: int
     cy: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Rect:
     left: int
     top: int

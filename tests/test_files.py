@@ -4,7 +4,6 @@ import pytest
 from neko2020.infrastructure.files import (
     get_project_root,
     get_user_resource_dir,
-    select_random_directory,
     select_random_directory_merged,
 )
 
@@ -41,32 +40,6 @@ def test_get_user_resource_dir_respects_xdg_config_home(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     result = get_user_resource_dir()
     assert result == str(tmp_path / "neko2020" / "resources")
-
-
-# ---------------------------------------------------------------------------
-# select_random_directory
-# ---------------------------------------------------------------------------
-
-
-def test_select_random_directory_returns_a_directory_name(tmp_path):
-    (tmp_path / "dir_a").mkdir()
-    (tmp_path / "dir_b").mkdir()
-    result = select_random_directory(str(tmp_path))
-    assert result in {"dir_a", "dir_b"}
-
-
-def test_select_random_directory_ignores_files(tmp_path):
-    (tmp_path / "only_dir").mkdir()
-    (tmp_path / "file.txt").write_text("x")
-    result = select_random_directory(str(tmp_path))
-    assert result == "only_dir"
-
-
-def test_select_random_directory_returns_name_not_full_path(tmp_path):
-    (tmp_path / "mydir").mkdir()
-    result = select_random_directory(str(tmp_path))
-    assert result == "mydir"
-    assert os.path.sep not in result
 
 
 # ---------------------------------------------------------------------------
@@ -127,3 +100,46 @@ def test_merged_both_missing_raises_index_error(tmp_path):
         select_random_directory_merged(
             str(tmp_path / "nope1"), str(tmp_path / "nope2")
         )
+
+
+def test_get_user_config_dir_respects_xdg_config_home(tmp_path, monkeypatch):
+    from neko2020.infrastructure.files import get_user_config_dir
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert get_user_config_dir() == str(tmp_path / "neko2020")
+
+
+def test_list_animals_merges_and_sorts_both_dirs(tmp_path):
+    from neko2020.infrastructure.files import list_animals
+
+    project = tmp_path / "project"
+    (project / "neko").mkdir(parents=True)
+    (project / "dog").mkdir()
+    (project / "file.txt").write_text("x")
+    user = tmp_path / "user"
+    (user / "cat").mkdir(parents=True)
+    (user / "dog").mkdir()
+    assert list_animals(str(project), str(user)) == ["cat", "dog", "neko"]
+
+
+def test_list_animals_ignores_missing_directories(tmp_path):
+    from neko2020.infrastructure.files import list_animals
+
+    missing = str(tmp_path / "nope")
+    assert list_animals(missing, missing) == []
+
+
+def test_list_animals_defaults_to_bundled_and_user_resource_dirs(
+    tmp_path, monkeypatch
+):
+    from neko2020.infrastructure import files
+
+    (tmp_path / "project" / "resource" / "neko").mkdir(parents=True)
+    (tmp_path / "user" / "cat").mkdir(parents=True)
+    monkeypatch.setattr(
+        files, "get_project_root", lambda: str(tmp_path / "project")
+    )
+    monkeypatch.setattr(
+        files, "get_user_resource_dir", lambda: str(tmp_path / "user")
+    )
+    assert files.list_animals() == ["cat", "neko"]

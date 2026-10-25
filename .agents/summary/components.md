@@ -7,8 +7,8 @@ description: Major modules and their responsibilities
 
 ## `neko2020/__main__.py` — Composition Root
 
-- Enumerates monitors (ctypes `EnumDisplayMonitors`) and creates a Tkinter window spanning the virtual screen
-- Applies transparency, click-through, and Alt+Tab hiding; positions the window with `SetWindowPos`
+- Gets monitors and the virtual-screen rect from `adapters/win32_overlay.py` and creates a Tkinter window spanning it (`main()` / `_create_overlay`)
+- Applies transparency and click-through via Tk attributes; Alt+Tab hiding and `SetWindowPos` placement come from `win32_overlay`
 - Builds `YamlConfigProvider`, `TkinterCursorProvider`, `AnimationService`, `ConfigDialog`, and the pystray tray menu (Config / Stop / Start / Restart / Quit)
 - Supplies the session factory that creates a fresh `(NekoStateMachine, TkinterRenderer)` pair on each start/restart, starting the pet at the cursor's monitor
 
@@ -16,11 +16,11 @@ description: Major modules and their responsibilities
 
 Central logic class; pure Python, no I/O. Responsibilities:
 
-- `tick(cursor, position, size, bounds) -> TickResult(frame_index, x, y)` — the single domain call per frame
+- `tick(cursor, position, size, bounds) -> TickResult(state, phase, x, y)` — the single domain call per frame
 - Computes velocity toward the cursor, capped at `speed.max` and clamped to the monitor bounds (inset by half the sprite size)
 - Direction chosen by dividing the circle into 8 sectors using `sin(pi/8)` thresholds
 - Idle timers drive STOP → WASH (or *_CLAW at screen edges) → SCRATCH → YAWN → SLEEP; cursor movement beyond `idle_space` wakes the pet (AWAKE) before it chases
-- Maps each `State` enum member to a 4-element list of integer frame indices
+- Reports the current `State` and a 0-3 animation `phase`; sprite choice lives in `adapters/sprite_map.py`
 
 ## `domain/value_objects.py` — Value Objects
 
@@ -41,12 +41,12 @@ Frozen dataclasses:
 
 ## `application/ports.py` — Ports
 
-ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` (`get_int/get_float/get_string/reload`), `ICursorProvider` (`get_cursor_position`), `IRenderer` (`render/get_position/get_size/get_bounds`).
+ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` (`get_int/get_float/get_string/get_bool/reload/save`), `ICursorProvider` (`get_cursor_position`), `IRenderer` (`render/get_position/get_size/get_bounds`).
 
 ## `adapters/tkinter_renderer.py` — TkinterRenderer
 
 - Loads the 32 sprites for the configured animal (resolving `"random"` across bundled and user resource dirs)
-- `render(frame_index, x, y)` redraws the single canvas image when the frame or position changed, converting screen coords to canvas coords
+- `render(state, phase, x, y)` redraws the single canvas image when the sprite or position changed, converting screen coords to canvas coords
 
 ## `adapters/tkinter_cursor.py` — TkinterCursorProvider
 
@@ -54,13 +54,14 @@ ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` 
 
 ## `adapters/yaml_config.py` — YamlConfigProvider
 
+- `save(data)` writes the user config (creating the directory and a `.bak` backup)
 - `reload()` loads `config/default_config.yml` and deep-merges the user config over it (BaseLoader: scalars stay strings; typed accessors convert)
 - Dot-notation accessors: `get_int`, `get_float`, `get_string`
 
 ## `infrastructure/image_loader.py` — Image Loader
 
 - `load_images(animal, scale, user_resource_base)` — returns the ordered list of 32 `ImageTk.PhotoImage` objects plus sprite width/height
-- The ordered icon-name list is hard-coded here; filenames under `resource/<animal>/` must match exactly
+- `ICON_NAMES` (the required sprite files) is defined here; filenames under `resource/<animal>/` must match exactly
 - User resource dir (`~/.config/neko2020/resources/<animal>/`) takes priority over the bundled `resource/`
 
 ## `infrastructure/files.py` — File Helpers
@@ -72,4 +73,4 @@ ABCs decoupling the domain/application from Tkinter and YAML: `IConfigProvider` 
 
 - Tray-opened Toplevel with tabbed sections (Appearance / Movement / Behavior Timing / Performance) generated from a declarative field list
 - Animal field is a read-only combobox listing bundled + user sprite sets plus `"random"`
-- Apply writes the user config (with `.bak` backup) and restarts the animation on a background thread
+- Apply saves through `IConfigProvider.save()` (the YAML adapter writes the user config with a `.bak` backup) and restarts the animation; the animal list comes from an injected `list_animals` callable

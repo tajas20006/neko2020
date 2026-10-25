@@ -13,12 +13,13 @@ class IConfigProvider(ABC):
     def get_float(path: str) -> float
     def get_string(path: str) -> str
     def reload() -> None
+    def save(data: dict) -> None   # write user config (+ .bak backup)
 
 class ICursorProvider(ABC):
     def get_cursor_position() -> Point
 
 class IRenderer(ABC):
-    def render(frame_index: int, x: int, y: int) -> None
+    def render(state: State, phase: int, x: int, y: int) -> None
     def get_position() -> Point
     def get_size() -> Size
     def get_bounds() -> Rect
@@ -29,16 +30,16 @@ Implementations live in `adapters/` (`YamlConfigProvider`, `TkinterCursorProvide
 ## Domain API (`domain/state_machine.py`)
 
 ```python
-NekoStateMachine(*, stop_time, wash_time, scratch_time, yawn_time,
-                 awake_time, claw_time, awake_rand, min_speed,
-                 max_speed, idle_space, offset: Point)
+NekoStateMachine(settings: BehaviorSettings)  # domain/settings.py
+AppSettings.from_config(config)  # application/settings.py: fps, animal,
+                                 # behavior; the only place that knows keys
 
 NekoStateMachine.tick(
     cursor: Point,      # current cursor position
     position: Point,    # current pet position (from renderer)
     size: Size,         # sprite size (for boundary insets)
     bounds: Rect,       # monitor containing the cursor
-) -> TickResult         # (frame_index, x, y)
+) -> TickResult         # (state, phase, x, y)
 ```
 
 `tick` is the only call per animation frame; `AnimationService` wires it to the renderer.
@@ -59,7 +60,6 @@ service.restart()  # stop, wait, start — reloads config and sprites
 ```yaml
 speed:
   max: 60
-  min: 2
 offset:
   x: 0
   y: -35

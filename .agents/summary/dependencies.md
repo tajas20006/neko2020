@@ -52,6 +52,6 @@ description: External dependencies and their usage
 
 ## Platform Constraints
 
-- Runtime is **Windows-only** — the overlay setup in `__main__.py` uses Win32 ctypes calls with no non-Windows code path (pystray itself is cross-platform)
+- Runtime is **Windows-only** — `adapters/win32_overlay.py` uses Win32 ctypes calls with no non-Windows code path (pystray itself is cross-platform)
 - Python `>=3.14` required
 - Package management via **uv** (`uv.lock`); build backend hatchling

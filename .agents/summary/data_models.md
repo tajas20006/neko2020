@@ -32,25 +32,26 @@ U_CLAW  D_CLAW  L_CLAW  R_CLAW
 ```python
 @dataclass(frozen=True)
 class TickResult:
-    frame_index: int   # index into the 32-icon list
+    state: State       # current behavior state
+    phase: int         # 0-3 position in the state's animation cycle
     x: int             # new pet center (screen coords)
     y: int
 ```
 
-## Frame Map
+## Sprite Map
 
-`NekoStateMachine.animation` maps each `State` to a 4-element list of integer frame indices, cycled by `tick_count`. Example:
+`adapters/sprite_map.py` maps each `(State, phase)` to an icon name. Example:
 
 ```python
 {
-    State.STOP:   [28, 28, 28, 28],
-    State.R_MOVE: [5, 6, 5, 6],
-    State.SLEEP:  [30, 30, 31, 31],
+    State.STOP:   ("yawn2",) * 4,
+    State.R_MOVE: ("right1", "right2", "right1", "right2"),
+    State.SLEEP:  ("sleep1", "sleep1", "sleep2", "sleep2"),
     ...
 }
 ```
 
-Indices refer to the ordered icon-name list in `infrastructure/image_loader.py` (`"Awake"`, `"up1"`, …, `"sleep2"` — 32 names). Names correspond directly to `.ico` filenames under `resource/<animal>/`.
+Names come from `ICON_NAMES` in `infrastructure/image_loader.py` (`"Awake"`, `"up1"`, …, `"sleep2"` — 32 names) and correspond directly to `.ico` filenames under `resource/<animal>/`.
 
 ## Configuration Dict
 
@@ -58,7 +59,7 @@ After loading and deep-merging YAMLs (`adapters/yaml_config.py`, BaseLoader — 
 
 ```python
 {
-    "speed": {"max": 60, "min": 2},
+    "speed": {"max": 60},
     "offset": {"x": 0, "y": -35},
     "duration": {"stop": 4, "wash": 10, "scratch": 4, "yawn": 3,
                  "awake": 3, "claw": 10, "awake_rand": 20},
@@ -72,4 +73,4 @@ After loading and deep-merging YAMLs (`adapters/yaml_config.py`, BaseLoader — 
 
 ## Image List
 
-`TkinterRenderer` holds the ordered `list[ImageTk.PhotoImage]` returned by `load_images()`; `TickResult.frame_index` indexes into it. Images are loaded once per session (start/restart), not per frame.
+`TkinterRenderer` holds the `dict[str, ImageTk.PhotoImage]` (keyed by icon name) returned by `load_images()`; `sprite_name(state, phase)` picks the key. Images are loaded once per session (start/restart), not per frame.

@@ -165,3 +165,35 @@ def test_missing_nested_key_raises(tmp_path):
     p.reload()
     with pytest.raises(TypeError):
         p.get_int("speed.max")
+
+
+def test_empty_user_config_is_ignored(tmp_path):
+    default = tmp_path / "default.yml"
+    default.write_text("fps: 4\n")
+    user = tmp_path / "user.yml"
+    user.write_text("")
+    p = YamlConfigProvider(str(default), str(user))
+    p.reload()
+    assert p.get_int("fps") == 4
+
+
+def test_save_creates_dirs_and_backs_up_existing(tmp_path):
+    default = tmp_path / "default.yml"
+    default.write_text("fps: 4\n")
+    user = tmp_path / "sub" / "config.yml"
+    p = YamlConfigProvider(str(default), str(user))
+    p.save({"fps": 8})
+    assert user.read_text() == "fps: 8\n"
+    p.save({"fps": 12})
+    assert user.read_text() == "fps: 12\n"
+    assert (tmp_path / "sub" / "config.yml.bak").read_text() == "fps: 8\n"
+
+
+def test_saved_settings_override_defaults_on_reload(tmp_path):
+    default = tmp_path / "default.yml"
+    default.write_text("fps: 4\nanimal: neko\n")
+    p = YamlConfigProvider(str(default), str(tmp_path / "config.yml"))
+    p.save({"fps": 8})
+    p.reload()
+    assert p.get_int("fps") == 8
+    assert p.get_string("animal") == "neko"

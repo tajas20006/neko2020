@@ -1,14 +1,10 @@
-import os
-import shutil
-import threading
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import messagebox, ttk
 
-import yaml
-
-from neko2020.application.animation_service import MIN_FPS
+from neko2020.application.animation_service import AnimationService
 from neko2020.application.ports import IConfigProvider
-from neko2020.infrastructure import files
+from neko2020.application.settings import MIN_FPS
 
 _DESCRIPTION = (
     "Adjust how your pet looks and behaves.\n"
@@ -28,7 +24,6 @@ _SECTIONS: list[tuple[str, str, list[tuple[str, str, type, int | None]]]] = [
         "How the pet chases the cursor and where it sits relative to it.",
         [
             ("speed.max", "Max Speed (px/frame)", int, None),
-            ("speed.min", "Min Speed (px/frame)", int, None),
             ("offset.x", "Cursor Offset X (px)", int, None),
             ("offset.y", "Cursor Offset Y (px)", int, None),
             ("idle_space", "Idle Threshold (px)", int, None),
@@ -76,23 +71,6 @@ def _all_fields():
         yield from fields
 
 
-def _get_animals() -> list[str]:
-    dirs: set[str] = set()
-    for base in (
-        os.path.join(files.get_project_root(), "resource"),
-        files.get_user_resource_dir(),
-    ):
-        try:
-            dirs.update(
-                d
-                for d in os.listdir(base)
-                if os.path.isdir(os.path.join(base, d))
-            )
-        except OSError:
-            pass
-    return ["random"] + sorted(dirs)
-
-
 def _set_nested(d: dict, path: str, value) -> None:
     keys = path.split(".")
     for key in keys[:-1]:
@@ -120,22 +98,13 @@ def _parse_int_field(
 def _scale_for_fps(data: dict, ratio: float) -> None:
     """Rescale `data` in place after the fps changes by `ratio`.
 
-    Frame Hold grows with fps and Max/Min Speed (px per tick) shrink, so
+    Frame Hold grows with fps and Max Speed (px per tick) shrink, so
     the sprite swap rate and the on-screen speed stay the same in real
     time. Pure logic, kept free of Tkinter so it's unit-testable
     headlessly.
     """
     data["frame_hold"] = max(1, round(data["frame_hold"] * ratio))
-    for key in ("max", "min"):
-        data["speed"][key] = max(1, round(data["speed"][key] / ratio))
-
-
-def _write_config(user_path: str, data: dict) -> None:
-    os.makedirs(os.path.dirname(user_path), exist_ok=True)
-    if os.path.exists(user_path):
-        shutil.copy2(user_path, user_path + ".bak")
-    with open(user_path, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
+    data["speed"]["max"] = max(1, round(data["speed"]["max"] / ratio))
 
 
 class ConfigDialog:
@@ -143,13 +112,13 @@ class ConfigDialog:
         self,
         parent: tk.Tk,
         config: IConfigProvider,
-        user_path: str,
-        service,
+        service: AnimationService,
+        list_animals: Callable[[], list[str]],
     ):
         self._parent = parent
         self._config = config
-        self._user_path = user_path
         self._service = service
+        self._list_animals = list_animals
         self._win: tk.Toplevel | None = None
         self._initial_fps: int | None = None
 
@@ -164,7 +133,7 @@ class ConfigDialog:
 
         self._config.reload()
         self._initial_fps = self._config.get_int("fps")
-        animals = _get_animals()
+        animals = ["random", *self._list_animals()]
 
         win = tk.Toplevel(self._parent)
         win.title("neko2020 Config")
@@ -277,8 +246,8 @@ class ConfigDialog:
         if data is None:
             return False
         self._maybe_scale_for_fps(data)
-        _write_config(self._user_path, data)
-        threading.Thread(target=self._service.restart, daemon=True).start()
+        self._config.save(data)
+        self._service.restart()
         self._initial_fps = data.get("fps", self._initial_fps)
         return True
 
@@ -295,7 +264,7 @@ class ConfigDialog:
             "Scale settings?",
             f"FPS changed from {self._initial_fps} to {new_fps} "
             f"(×{ratio:.3g}).\n\n"
-            "Scale Frame Hold up and Max/Min Speed down by the same "
+            "Scale Frame Hold up and Max Speed down by the same "
             "factor to keep the same real-time look and speed?",
             parent=self._win,
         ):
@@ -304,7 +273,6 @@ class ConfigDialog:
         for path, value in (
             ("frame_hold", data["frame_hold"]),
             ("speed.max", data["speed"]["max"]),
-            ("speed.min", data["speed"]["min"]),
         ):
             self._vars[path].set(str(value))
 
