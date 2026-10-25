@@ -127,3 +127,19 @@ def test_list_animals_ignores_missing_directories(tmp_path):
 
     missing = str(tmp_path / "nope")
     assert list_animals(missing, missing) == []
+
+
+def test_list_animals_defaults_to_bundled_and_user_resource_dirs(
+    tmp_path, monkeypatch
+):
+    from neko2020.infrastructure import files
+
+    (tmp_path / "project" / "resource" / "neko").mkdir(parents=True)
+    (tmp_path / "user" / "cat").mkdir(parents=True)
+    monkeypatch.setattr(
+        files, "get_project_root", lambda: str(tmp_path / "project")
+    )
+    monkeypatch.setattr(
+        files, "get_user_resource_dir", lambda: str(tmp_path / "user")
+    )
+    assert files.list_animals() == ["cat", "neko"]
