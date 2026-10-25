@@ -1,9 +1,14 @@
+import sys
 from unittest.mock import MagicMock
 
 import pytest
 
-from neko2020 import __main__ as app
-from neko2020.domain.value_objects import Point, Rect
+# pystray picks its backend at import time, which fails without a display
+# (e.g. headless CI); main() is exercised with mocks anyway.
+sys.modules.setdefault("pystray", MagicMock())
+
+from neko2020 import __main__ as app  # noqa: E402
+from neko2020.domain.value_objects import Point, Rect  # noqa: E402
 
 SCREEN = Rect(-1920, 0, 1920, 1080)
 
