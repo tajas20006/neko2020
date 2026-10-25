@@ -38,6 +38,7 @@ dev = [
     "pywin32>=312 ; sys_platform == 'win32'",
     "pre-commit>=4.7.0",
     "pefile>=2024.8.26",
+    "pytest-cov>=7.1.0",
 ]
 
 [[tool.uv.index]]

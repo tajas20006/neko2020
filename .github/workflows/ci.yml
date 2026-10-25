@@ -30,7 +30,7 @@ jobs:
         run: uv run ruff check neko2020/ tests/
 
       - name: Pytest
-        run: uv run --with pytest-cov pytest --cov=neko2020 --cov-branch --cov-report=term-missing --cov-report=xml
+        run: uv run pytest --cov=neko2020 --cov-branch --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
