@@ -1,63 +1,19 @@
-import ctypes
-import ctypes.wintypes
 import os
 import tkinter as tk
 
 import pystray
 from PIL import Image
 
+from neko2020.adapters import win32_overlay
 from neko2020.adapters.tkinter_cursor import TkinterCursorProvider
 from neko2020.adapters.tkinter_renderer import TkinterRenderer
 from neko2020.adapters.yaml_config import YamlConfigProvider
 from neko2020.application.animation_service import AnimationService
 from neko2020.application.ports import IConfigProvider
 from neko2020.domain.state_machine import NekoStateMachine
-from neko2020.domain.value_objects import Point, Rect
+from neko2020.domain.value_objects import Point
 from neko2020.infrastructure import files
 from neko2020.ui.config_dialog import ConfigDialog
-
-GWL_EXSTYLE = -20
-WS_EX_TOOLWINDOW = 0x80
-SWP_NOZORDER = 0x0004
-
-
-def _get_monitors() -> list[Rect]:
-    """Return each physical display's rect in virtual screen coordinates."""
-    rects: list[Rect] = []
-
-    MonitorEnumProc = ctypes.WINFUNCTYPE(
-        ctypes.wintypes.BOOL,
-        ctypes.wintypes.HMONITOR,
-        ctypes.wintypes.HDC,
-        ctypes.POINTER(ctypes.wintypes.RECT),
-        ctypes.wintypes.LPARAM,
-    )
-
-    def _cb(hMon, hDC, lpRect, lParam):
-        r = lpRect.contents
-        rects.append(Rect(r.left, r.top, r.right, r.bottom))
-        return True
-
-    ctypes.windll.user32.EnumDisplayMonitors(
-        None, None, MonitorEnumProc(_cb), 0
-    )
-    return rects
-
-
-def _virtual_screen(monitors: list[Rect]) -> tuple[int, int, int, int]:
-    """Return (left, top, width, height) bounding box of all monitors."""
-    left = min(m.left for m in monitors)
-    top = min(m.top for m in monitors)
-    right = max(m.right for m in monitors)
-    bottom = max(m.bottom for m in monitors)
-    return left, top, right - left, bottom - top
-
-
-def _hide_from_alt_tab(root):
-    hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
-    style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-    style |= WS_EX_TOOLWINDOW
-    ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
 
 
 def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
@@ -79,26 +35,33 @@ def _build_state_machine(config: IConfigProvider) -> NekoStateMachine:
     )
 
 
-if __name__ == "__main__":
-    monitors = _get_monitors()
-    vx, vy, vw, vh = _virtual_screen(monitors)
-
+def _create_overlay(screen):
+    """Create the transparent, click-through root window and its canvas."""
     root = tk.Tk()
-    canvas = tk.Canvas(bg="green", width=vw, height=vh, highlightthickness=0)
+    canvas = tk.Canvas(
+        bg="green",
+        width=screen.width,
+        height=screen.height,
+        highlightthickness=0,
+    )
     canvas.place(x=0, y=0)
     root.overrideredirect(True)
-    root.geometry(f"{vw}x{vh}")
+    root.geometry(f"{screen.width}x{screen.height}")
     root.lift()
     root.wm_attributes("-topmost", True)
     root.wm_attributes("-disabled", True)
     root.wm_attributes("-transparentcolor", "green")
 
-    root.after(10, _hide_from_alt_tab, root)
+    root.after(10, win32_overlay.hide_from_alt_tab, root)
     root.update()
+    win32_overlay.place_window(root, screen)
+    return root, canvas
 
-    # geometry() can't express negative screen coordinates; use SetWindowPos.
-    hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
-    ctypes.windll.user32.SetWindowPos(hwnd, None, vx, vy, vw, vh, SWP_NOZORDER)
+
+def main() -> None:
+    monitors = win32_overlay.get_monitors()
+    screen = win32_overlay.virtual_screen(monitors)
+    root, canvas = _create_overlay(screen)
 
     project_root = files.get_project_root()
     user_config_path = os.path.join(files.get_user_config_dir(), "config.yml")
@@ -115,7 +78,9 @@ if __name__ == "__main__":
         # Start the pet at the cursor's current screen position so it
         # appears on whichever monitor the user is already using.
         initial_pos = cursor_provider.get_cursor_position()
-        renderer = TkinterRenderer(canvas, config, vx, vy, initial_pos)
+        renderer = TkinterRenderer(
+            canvas, config, screen.left, screen.top, initial_pos
+        )
         state_machine = _build_state_machine(config)
         return state_machine, renderer
 
@@ -163,3 +128,7 @@ if __name__ == "__main__":
     root.mainloop()
 
     tray_icon.stop()
+
+
+if __name__ == "__main__":
+    main()

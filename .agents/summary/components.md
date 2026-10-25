@@ -7,8 +7,8 @@ description: Major modules and their responsibilities
 
 ## `neko2020/__main__.py` — Composition Root
 
-- Enumerates monitors (ctypes `EnumDisplayMonitors`) and creates a Tkinter window spanning the virtual screen
-- Applies transparency, click-through, and Alt+Tab hiding; positions the window with `SetWindowPos`
+- Gets monitors and the virtual-screen rect from `adapters/win32_overlay.py` and creates a Tkinter window spanning it (`main()` / `_create_overlay`)
+- Applies transparency and click-through via Tk attributes; Alt+Tab hiding and `SetWindowPos` placement come from `win32_overlay`
 - Builds `YamlConfigProvider`, `TkinterCursorProvider`, `AnimationService`, `ConfigDialog`, and the pystray tray menu (Config / Stop / Start / Restart / Quit)
 - Supplies the session factory that creates a fresh `(NekoStateMachine, TkinterRenderer)` pair on each start/restart, starting the pet at the cursor's monitor
 

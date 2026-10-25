@@ -26,7 +26,7 @@ neko2020/
 │   ├── __main__.py      # Composition root: window, tray, wiring
 │   ├── domain/          # state_machine.py, value_objects.py (pure logic)
 │   ├── application/     # animation_service.py, ports.py (ABCs)
-│   ├── adapters/        # tkinter_renderer.py, tkinter_cursor.py,
+│   ├── adapters/        # tkinter_renderer.py, tkinter_cursor.py, win32_overlay.py,
 │   │                    #   yaml_config.py
 │   ├── infrastructure/  # files.py, image_loader.py
 │   └── ui/              # config_dialog.py

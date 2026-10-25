@@ -7,7 +7,7 @@ Desktop pet (oneko-style) for Windows. An animated sprite chases the mouse curso
 ```
 neko2020/
 ├── neko2020/              # Main package (clean-architecture layers)
-│   ├── __main__.py        # Composition root: Tkinter window, Win32 setup,
+│   ├── __main__.py        # Composition root: Tkinter window setup,
 │   │                      #   tray menu, wiring of all layers
 │   ├── domain/            # Pure logic, no I/O
 │   │   ├── state_machine.py  # NekoStateMachine — 18-state behavior logic
@@ -20,6 +20,8 @@ neko2020/
 │   ├── adapters/          # Port implementations
 │   │   ├── tkinter_renderer.py   # Canvas drawing + sprite loading
 │   │   ├── tkinter_cursor.py     # Cursor position via Tk
+│   │   ├── win32_overlay.py      # ctypes: monitors, Alt+Tab hiding,
+│   │   │                         #   SetWindowPos
 │   │   └── yaml_config.py        # YAML loader with deep merge
 │   ├── infrastructure/
 │   │   ├── files.py              # Project root, user resource dir,
@@ -56,7 +58,7 @@ neko2020/
 
 ## Repo-Specific Patterns
 
-- **Windows-only at runtime** — the ctypes calls in `__main__.py` are Win32-only (monitor enumeration, window styles). `pystray` itself is cross-platform, but there is no non-Windows code path for the overlay.
+- **Windows-only at runtime** — the ctypes calls in `adapters/win32_overlay.py` are Win32-only (monitor enumeration, window styles). `pystray` itself is cross-platform, but there is no non-Windows code path for the overlay.
 - **Pre-commit hooks** enforce ruff format (79-char) + ruff lint; run `uv run pre-commit install` after cloning.
 - **Adding a new animal**: create `resource/<name>/` (or `~/.config/neko2020/resources/<name>/`) with all 32 `.ico` files matching the hard-coded name list in `infrastructure/image_loader.py`, then set `animal: <name>` in user config. The `tools/` scripts can generate sets with AI.
 - **CI**: `ci.yml` runs pytest with coverage upload to Codecov; `build-exe.yml` builds the exe and creates a GitHub Release on master; `.github/workflows/claude.yml` responds to `@claude` mentions; `claude-code-review.yml` reviews every PR automatically via `anthropics/claude-code-action@v1`.

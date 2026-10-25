@@ -49,7 +49,7 @@ The animation loop runs on Tkinter's `after()` scheduler (not a separate thread)
 domain/         # Pure logic, no I/O: state_machine.py, value_objects.py
 application/    # Orchestration: animation_service.py, ports.py (ABCs)
 adapters/       # Port implementations: tkinter_renderer.py,
-                #   tkinter_cursor.py, yaml_config.py
+                #   tkinter_cursor.py, win32_overlay.py, yaml_config.py
 infrastructure/ # Filesystem/resources: files.py, image_loader.py
 ui/             # config_dialog.py (tray-opened settings GUI)
 __main__.py     # Composition root: window setup, wiring, tray menu
