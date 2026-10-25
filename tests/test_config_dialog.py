@@ -289,3 +289,103 @@ def test_open_builds_checkbox_for_bool_fields(monkeypatch):
     fake_tk.Checkbutton.assert_called_once()
     assert dialog._vars["wander.enabled"] is fake_tk.BooleanVar.return_value
     assert "wander.sleep_time" in dialog._vars
+
+
+# ---------------------------------------------------------------------------
+# _get_animals / _write_config / lifecycle
+# ---------------------------------------------------------------------------
+
+
+def test_get_animals_lists_random_first_and_sorted_dirs(tmp_path, monkeypatch):
+    project = tmp_path / "project"
+    (project / "resource" / "neko").mkdir(parents=True)
+    (project / "resource" / "dog").mkdir()
+    (project / "resource" / "file.txt").write_text("x")
+    user = tmp_path / "user"
+    (user / "cat").mkdir(parents=True)
+    monkeypatch.setattr(
+        config_dialog.files, "get_project_root", lambda: str(project)
+    )
+    monkeypatch.setattr(
+        config_dialog.files, "get_user_resource_dir", lambda: str(user)
+    )
+    assert config_dialog._get_animals() == ["random", "cat", "dog", "neko"]
+
+
+def test_get_animals_ignores_missing_directories(tmp_path, monkeypatch):
+    missing = str(tmp_path / "nope")
+    monkeypatch.setattr(
+        config_dialog.files, "get_project_root", lambda: missing
+    )
+    monkeypatch.setattr(
+        config_dialog.files, "get_user_resource_dir", lambda: missing
+    )
+    assert config_dialog._get_animals() == ["random"]
+
+
+def test_write_config_creates_dirs_and_backs_up_existing(tmp_path):
+    path = tmp_path / "sub" / "config.yml"
+    config_dialog._write_config(str(path), {"fps": 4})
+    assert path.read_text() == "fps: 4\n"
+    config_dialog._write_config(str(path), {"fps": 8})
+    assert path.read_text() == "fps: 8\n"
+    assert (tmp_path / "sub" / "config.yml.bak").read_text() == "fps: 4\n"
+
+
+def test_do_save_returns_false_when_collect_fails(monkeypatch):
+    dialog = _make_dialog_with_vars({"fps": "abc"})
+    monkeypatch.setattr(
+        "neko2020.ui.config_dialog.messagebox.showerror",
+        lambda *a, **kw: None,
+    )
+    assert dialog._do_save() is False
+
+
+def _saved_dialog(monkeypatch):
+    dialog = _make_dialog_with_vars({})
+    monkeypatch.setattr(
+        "neko2020.ui.config_dialog._write_config", lambda *a, **kw: None
+    )
+    monkeypatch.setattr(
+        "neko2020.ui.config_dialog.threading.Thread", MagicMock()
+    )
+    dialog._win = MagicMock()
+    return dialog
+
+
+def test_save_writes_and_closes_window(monkeypatch):
+    dialog = _saved_dialog(monkeypatch)
+    win = dialog._win
+    dialog._save()
+    win.destroy.assert_called_once()
+    assert dialog._win is None
+
+
+def test_apply_saves_but_keeps_window_open(monkeypatch):
+    dialog = _saved_dialog(monkeypatch)
+    win = dialog._win
+    dialog._apply()
+    win.destroy.assert_not_called()
+    assert dialog._win is win
+
+
+def test_cancel_closes_window():
+    dialog = _make_dialog_with_vars({})
+    win = dialog._win = MagicMock()
+    dialog._cancel()
+    win.destroy.assert_called_once()
+    assert dialog._win is None
+
+
+def test_close_without_window_is_noop():
+    dialog = _make_dialog_with_vars({})
+    dialog._close()
+    assert dialog._win is None
+
+
+def test_open_existing_window_lifts_and_focuses():
+    dialog = _make_dialog_with_vars({})
+    win = dialog._win = MagicMock()
+    dialog.open()
+    win.lift.assert_called_once()
+    win.focus_set.assert_called_once()

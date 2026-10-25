@@ -24,7 +24,7 @@ Load this file first. Each entry below summarizes a documentation file so you ca
 
 ## Quick Reference
 
-- **Technology**: Python 3.12+, Tkinter, Pillow, pystray, ctypes (Win32), PyInstaller, uv
+- **Technology**: Python 3.14+, Tkinter, Pillow, pystray, ctypes (Win32), PyInstaller, uv
 - **Platform**: Windows-only at runtime
 - **Entry point**: `neko2020/__main__.py` (also `python -m neko2020`)
 - **State machine**: `neko2020/domain/state_machine.py` — `NekoStateMachine`, 18 states

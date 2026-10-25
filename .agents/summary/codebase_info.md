@@ -9,7 +9,7 @@ description: Basic metadata about the neko2020 project
 |---|---|
 | Name | neko2020 |
 | Version | 0.2.1 |
-| Language | Python >=3.12,<3.14 |
+| Language | Python >=3.14 |
 | License | MIT |
 | Build System | uv + hatchling |
 | Repository | https://github.com/tajas20006/neko2020 |
